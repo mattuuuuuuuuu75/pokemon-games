@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ポケモンカード">
+    <meta name="theme-color" content="#d946ef">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="../assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
+    <title>ポケモン キラカード しんけいすいじゃく！</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100dvh;
+            max-height: 100dvh;
+            overflow: hidden;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #110922;
+            background-image:
+                radial-gradient(circle at 18% 18%, rgba(232, 121, 249, 0.24) 0%, transparent 45%),
+                radial-gradient(circle at 82% 22%, rgba(250, 204, 21, 0.20) 0%, transparent 45%),
+                radial-gradient(circle at 50% 88%, rgba(56, 189, 248, 0.18) 0%, transparent 50%);
+            color: #fff;
+            user-select: none;
+        }
+
+        .text-outline {
+            text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 5px rgba(0,0,0,0.9);
+        }
+        .text-outline-sm {
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        }
+
+        /* 3Dカードフリップ */
+        .card-scene {
+            perspective: 900px;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.42s cubic-bezier(0.34, 1.45, 0.64, 1);
+        }
+        .card-scene.is-flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+        .card-front {
+            transform: rotateY(180deg);
+        }
+
+        /* ロトムスキャンヒント発光 */
+        @keyframes scanHintGlow {
+            0%, 100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 18px #fde047, 0 0 32px #f472b6; }
+            50%      { transform: scale(1.07) rotate(-3deg); box-shadow: 0 0 30px #fef08a, 0 0 48px #38bdf8; }
+        }
+        .scan-hint-card {
+            animation: scanHintGlow 0.55s ease-in-out infinite;
+            z-index: 25;
+        }
+
+        /* ペア成立キラキラ */
+        @keyframes matchedPop {
+            0%   { transform: rotateY(180deg) scale(1); }
+            45%  { transform: rotateY(180deg) scale(1.12); }
+            100% { transform: rotateY(180deg) scale(0.96); }
+        }
+        .card-scene.is-matched .card-inner {
+            animation: matchedPop 0.48s ease-out forwards;
+        }
+
+        @keyframes activePlayerGlow {
+            0%, 100% { box-shadow: 0 0 10px #fde047; transform: translateY(0); }
+            50%      { box-shadow: 0 0 24px #f472b6; transform: translateY(-2px); }
+        }
+        .player-turn-active { animation: activePlayerGlow 1.1s ease-in-out infinite; }
+
+        .manga-burst {
+            background: repeating-conic-gradient(
+                from 0deg,
+                rgba(232, 121, 249, 0.12) 0deg 3deg,
+                transparent 3deg 9deg
+            );
+        }
+    </style>
+</head>
+<body class="relative w-screen h-[100dvh] overflow-hidden flex flex-col justify-between">
+
+    <audio id="voiceAudio" preload="auto" playsinline class="hidden"></audio>
+    <canvas id="fxCanvas" class="fixed inset-0 pointer-events-none z-40"></canvas>
+
+    <!-- ==========================================================
+         スタート画面オーバーレイ
+    =========================================================== -->
+    <div id="setupOverlay" class="fixed inset-0 z-50 bg-gradient-to-br from-slate-950 via-purple-950/95 to-fuchsia-950 flex flex-col justify-between p-3 sm:p-5 overflow-y-auto">
+        <div class="manga-burst fixed inset-0 pointer-events-none"></div>
+
+        <div class="relative z-10 w-full max-w-5xl mx-auto flex items-center justify-between shrink-0">
+            <a href="../index.html" class="px-3 py-1.5 rounded-2xl bg-slate-800/90 border-2 border-pink-400 text-pink-200 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
+                <span>🏠</span><span>ゲーム いちらんへ</span>
+            </a>
+            <div class="inline-flex items-center gap-2 bg-gradient-to-r from-pink-300 via-fuchsia-400 to-amber-300 text-black font-black text-xs sm:text-sm px-4 py-1 rounded-full border-2 border-white shadow">
+                <span>🃏 キラキラ ポケモンカード ゲーム</span>
+            </div>
+            <button onclick="toggleMute()" class="mute-btn px-3 py-1.5 rounded-2xl bg-fuchsia-900/90 border-2 border-pink-400 text-pink-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
+                <span>🔊</span><span>おと オン</span>
+            </button>
+        </div>
+
+        <div class="relative z-10 w-full max-w-5xl mx-auto text-center my-1">
+            <div class="flex items-center justify-center gap-2 sm:gap-3 mb-2">
+                <img src="../assets/cards/card_back.webp" alt="" class="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl object-cover border-2 border-red-400 shadow-lg -rotate-6">
+                <img src="../assets/cards/leader_pikachu.webp" alt="" class="w-18 h-18 sm:w-22 sm:h-22 rounded-2xl object-cover border-3 border-yellow-300 shadow-xl">
+                <img src="../assets/cards/leader_mew.webp" alt="" class="w-18 h-18 sm:w-22 sm:h-22 rounded-2xl object-cover border-3 border-pink-300 shadow-xl">
+                <img src="../assets/cards/card_back.webp" alt="" class="w-14 h-14 sm:w-18 sm:h-18 rounded-2xl object-cover border-2 border-red-400 shadow-lg rotate-6">
+            </div>
+            <h1 class="text-2xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-pink-300 to-fuchsia-400 drop-shadow-[0_4px_12px_rgba(232,121,249,0.5)]">
+                ポケモン キラカード しんけいすいじゃく！
+            </h1>
+            <p class="text-xs sm:text-base font-extrabold text-pink-200 mt-1">
+                モンスターボールの カードを めくって、おなじ ポケモンの ペアを そろえよう！
+            </p>
+        </div>
+
+        <!-- 設定パネル -->
+        <div class="relative z-10 w-full max-w-5xl mx-auto space-y-3 my-1">
+            <!-- ① にんずう -->
+            <div class="bg-slate-900/85 border-2 border-pink-400/60 rounded-2xl p-3">
+                <div class="text-xs sm:text-sm font-black text-yellow-300 mb-2">🙌 ① なんにんで あそぶ？（プレイヤーを タッチすると ポケモンも かえられるよ！）</div>
+                <div id="playerCountRow" class="grid grid-cols-4 gap-2 sm:gap-3"></div>
+                <div id="partnerPickerRow" class="mt-2.5 flex items-center justify-center gap-2 flex-wrap"></div>
+            </div>
+
+            <!-- ② まいすう ＆ ③ チラみタイム -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div class="md:col-span-2 bg-slate-900/85 border-2 border-cyan-400/60 rounded-2xl p-3">
+                    <div class="text-xs sm:text-sm font-black text-cyan-300 mb-2">🃏 ② カードの まいすう</div>
+                    <div id="deckSizeRow" class="grid grid-cols-4 gap-2"></div>
+                </div>
+
+                <div class="bg-slate-900/85 border-2 border-amber-400/60 rounded-2xl p-3 flex flex-col justify-between">
+                    <div class="text-xs sm:text-sm font-black text-amber-300 mb-2">👀 ③ さいしょの 3びょう チラみ</div>
+                    <div id="peekToggleRow" class="grid grid-cols-2 gap-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative z-10 w-full max-w-5xl mx-auto text-center pb-1">
+            <button onclick="startMemoryGame()" class="px-10 py-3 sm:py-4 rounded-3xl font-black text-lg sm:text-2xl text-black bg-gradient-to-r from-yellow-300 via-pink-300 to-fuchsia-400 border-4 border-white shadow-[0_0_30px_rgba(232,121,249,0.95)] active:scale-95 transition inline-flex items-center gap-3">
+                <span>🃏</span>
+                <span>カード バトル スタート！！</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================================
+         メインゲーム画面（100dvh 固定・スクロールなし）
+    =========================================================== -->
+    <header class="relative z-20 h-[12dvh] min-h-[64px] max-h-[90px] bg-gradient-to-r from-slate-950 via-purple-950 to-slate-950 border-b-2 border-pink-400 px-2 sm:px-3 py-1 flex items-center justify-between gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
+            <a href="../index.html" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 border border-pink-400/70 flex items-center justify-center text-sm active:scale-95" title="ポータルへ">🏠</a>
+            <button onclick="backToSetup()" class="px-2.5 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 border border-yellow-400/70 text-yellow-200 text-xs font-black active:scale-95">
+                🔄 せってい
+            </button>
+        </div>
+
+        <!-- プレイヤースコア枠 -->
+        <div id="scoreboardRow" class="flex-1 h-full flex items-center justify-center gap-1.5 sm:gap-2.5 overflow-hidden"></div>
+
+        <!-- 右：おたすけロトムスキャン ＆ 音 -->
+        <div class="flex items-center gap-1.5 shrink-0">
+            <button id="rotomScanBtn" onclick="useRotomScan()" class="px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-300 to-cyan-300 text-black border-2 border-white text-xs sm:text-sm font-black shadow-lg active:scale-95 flex items-center gap-1">
+                <span>✨</span><span>ロトムスキャン</span><span id="scanLeftBadge" class="bg-black/80 text-yellow-300 text-[10px] px-1.5 rounded-full">2</span>
+            </button>
+            <button onclick="toggleMute()" class="mute-btn w-8 h-8 rounded-xl bg-fuchsia-900 border border-pink-400 flex items-center justify-center text-sm active:scale-95">🔊</button>
+        </div>
+    </header>
+
+    <!-- 実況メッセージバー -->
+    <div class="relative z-20 h-[6dvh] min-h-[34px] max-h-[46px] bg-black/65 border-b border-pink-500/30 px-3 flex items-center justify-between gap-2 shrink-0">
+        <div id="statusMessage" class="text-xs sm:text-lg font-black text-yellow-200 text-outline-sm truncate">
+            すきな カードを 2まい タッチして めくろう！
+        </div>
+        <div class="text-xs sm:text-sm font-black text-pink-300 shrink-0">
+            のこり：<span id="pairsRemainLabel">8</span> ペア
+        </div>
+    </div>
+
+    <!-- 中央：キラカードグリッド (残り高さに完全フィット) -->
+    <main class="relative z-10 flex-1 min-h-0 w-full max-w-6xl mx-auto p-2 sm:p-3 flex items-center justify-center overflow-hidden">
+        <div id="memoryGrid" class="w-full h-full grid gap-2 sm:gap-3"></div>
+
+        <!-- 開幕3秒チラ見カウントダウンバナー -->
+        <div id="peekCountdownBanner" class="hidden pointer-events-none absolute inset-x-0 top-4 z-30 flex justify-center">
+            <div class="px-6 py-2 rounded-full bg-gradient-to-r from-yellow-300 via-amber-400 to-pink-400 text-black font-black text-base sm:text-2xl border-4 border-white shadow-[0_0_35px_rgba(250,204,21,1)] animate-bounce">
+                👀 いまのうちに ばしょを おぼえてね！！ <span id="peekSecNum">3</span>！
+            </div>
+        </div>
+    </main>
+
+    <!-- 🏆 クリア＆表彰式モーダル -->
+    <div id="finaleModal" class="hidden fixed inset-0 z-50 bg-black/88 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="manga-burst fixed inset-0 pointer-events-none"></div>
+        <div class="relative z-10 max-w-3xl w-full bg-gradient-to-b from-yellow-300 via-pink-400 to-purple-600 p-1.5 rounded-3xl shadow-[0_0_70px_rgba(232,121,249,0.95)]">
+            <div class="bg-slate-950 rounded-[22px] p-5 sm:p-7 text-center space-y-4">
+                <div class="inline-block bg-yellow-300 text-black font-black text-xs sm:text-base px-5 py-1 rounded-full animate-bounce">
+                    🎊 ぜんぶの キラカードが そろったよ！！ 🎊
+                </div>
+                <h2 id="finaleTitle" class="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-pink-300 to-cyan-300">
+                    🏆 きおくりょく ポケモンマスター！！
+                </h2>
+                <div id="finaleResultsGrid" class="grid gap-3 pt-1"></div>
+                <div class="flex items-center justify-center gap-3 pt-2 flex-wrap">
+                    <button onclick="startMemoryGame()" class="px-7 py-3 rounded-2xl font-black text-sm sm:text-lg bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 text-black border-3 border-white shadow-xl active:scale-95">
+                        🔄 もういちど あそぶ！
+                    </button>
+                    <button onclick="backToSetup()" class="px-6 py-3 rounded-2xl font-black text-sm sm:text-lg bg-gradient-to-r from-pink-400 to-purple-500 text-white border-2 border-white shadow-lg active:scale-95">
+                        🃏 まいすう・にんずうを かえる
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/data/pokemon_db.js"></script>
+    <script>
+        /* ==========================================================
+           1. パートナー候補 ＆ デッキサイズ設定
+        ========================================================== */
+        const PARTNERS = [
+            { id: 'pikachu',   name: 'ピカチュウ', color: '#eab308', img: '../assets/cards/leader_pikachu.webp' },
+            { id: 'eevee',     name: 'イーブイ',   color: '#ec4899', img: '../assets/cards/leader_eevee.webp' },
+            { id: 'piplup',    name: 'ポッチャマ', color: '#0ea5e9', img: '../assets/cards/leader_piplup.webp' },
+            { id: 'charizard', name: 'リザードン', color: '#ea580c', img: '../assets/cards/leader_charizard.webp' },
+            { id: 'mew',       name: 'ミュウ',     color: '#f472b6', img: '../assets/cards/leader_mew.webp' },
+            { id: 'lucario',   name: 'ルカリオ',   color: '#0284c7', img: '../assets/cards/leader_lucario.webp' },
+            { id: 'sylveon',   name: 'ニンフィア', color: '#db2777', img: '../assets/cards/leader_sylveon.webp' },
+            { id: 'gengar',    name: 'ゲンガー',   color: '#7c3aed', img: '../assets/cards/leader_gengar.webp' },
+            { id: 'greninja',  name: 'ゲッコウガ', color: '#2563eb', img: '../assets/cards/leader_greninja.webp' },
+            { id: 'rayquaza',  name: 'レックウザ', color: '#059669', img: '../assets/cards/leader_rayquaza.webp' },
+            { id: 'mimikyu',   name: 'ミミッキュ', color: '#d97706', img: '../assets/cards/leader_mimikyu.webp' },
+            { id: 'mewtwo',    name: 'ミュウツー', color: '#9333ea', img: '../assets/cards/leader_mewtwo.webp' }
+        ];
+
+        const DECK_SIZES = [
+            { cards: 12, pairs: 6,  cols: 4, rows: 3, label: '🌱 12まい', sub: 'かんたん 6ペア' },
+            { cards: 16, pairs: 8,  cols: 4, rows: 4, label: '⚡ 16まい', sub: 'ふつう 8ペア' },
+            { cards: 24, pairs: 12, cols: 6, rows: 4, label: '🔥 24まい', sub: 'じっくり 12ペア' },
+            { cards: 30, pairs: 15, cols: 6, rows: 5, label: '👑 30まい', sub: 'マスター 15ペア' }
+        ];
+
+        const ALL_CARDS_75 = window.POKEMON_MAIN_75 || [];
+
+        const state = {
+            soundOn: true,
+            audioManifest: null,
+            playerCount: 2,
+            slotPartnerIdx: [0, 1, 2, 3],
+            deckCardsCount: 16,
+            initialPeek: true,
+            players: [],
+            turnIdx: 0,
+            cards: [], // [{ idx, poke, flipped, matched, ownerColor, ownerLabel, scanHint }]
+            flippedIndices: [],
+            lockInput: false,
+            scansLeft: 2,
+            movesCount: 0,
+            startTimeMs: 0,
+            peekTimer: null
+        };
+
+        /* ==========================================================
+           2. 音声 ＆ 効果音
+        ========================================================== */
+        const voiceEl = document.getElementById('voiceAudio');
+        let audioCtx = null;
+        let unlocked = false;
+
+        async function loadManifest() {
+            try {
+                const res = await fetch('../assets/audio/manifest.json?v=' + Date.now());
+                if (res.ok) state.audioManifest = await res.json();
+            } catch (_) {}
+        }
+
+        function unlockAudio() {
+            if (unlocked) return;
+            unlocked = true;
+            if (!audioCtx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (AC) audioCtx = new AC();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        window.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
+
+        function toggleMute() {
+            unlockAudio();
+            state.soundOn = !state.soundOn;
+            if (!state.soundOn) voiceEl.pause();
+            document.querySelectorAll('.mute-btn').forEach(b => {
+                b.innerHTML = state.soundOn
+                    ? (b.textContent.includes('おと') ? '<span>🔊</span><span>おと オン</span>' : '🔊')
+                    : (b.textContent.includes('おと') ? '<span>🔇</span><span>おと オフ</span>' : '🔇');
+            });
+        }
+
+        function playFlipSound(high = false) {
+            if (!state.soundOn) return;
+            unlockAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(high ? 580 : 440, now);
+            osc.frequency.exponentialRampToValueAtTime(high ? 920 : 720, now + 0.08);
+            g.gain.setValueAtTime(0.22, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(now); osc.stop(now + 0.10);
+        }
+
+        function playPairChime(combo = 1) {
+            if (!state.soundOn) return;
+            unlockAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const boost = 1 + Math.min(4, combo - 1) * 0.08;
+            [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(f * boost, now + i * 0.065);
+                g.gain.setValueAtTime(0.25, now + i * 0.065);
+                g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.065 + 0.24);
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.start(now + i * 0.065); osc.stop(now + i * 0.065 + 0.25);
+            });
+        }
+
+        function playMissSound() {
+            if (!state.soundOn) return;
+            unlockAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(340, now);
+            osc.frequency.exponentialRampToValueAtTime(220, now + 0.18);
+            g.gain.setValueAtTime(0.18, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.19);
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(now); osc.stop(now + 0.20);
+        }
+
+        function playPokemonCry(poke) {
+            if (!state.soundOn || !poke) return;
+            voiceEl.src = `../${poke.crySrc}`;
+            voiceEl.currentTime = 0;
+            voiceEl.play().catch(() => {});
+        }
+
+        function playSysVoice(key) {
+            if (!state.soundOn) return;
+            const src = state.audioManifest?.sys?.[key]?.src ? `../${state.audioManifest.sys[key].src}` : `../assets/audio/sys/${key}.mp3`;
+            voiceEl.src = src;
+            voiceEl.currentTime = 0;
+            voiceEl.play().catch(() => {});
+        }
+
+        /* ==========================================================
+           3. セットアップ画面
+        ========================================================== */
+        function renderSetup() {
+            const pRow = document.getElementById('playerCountRow');
+            const labels = { 1: '👑 1にん', 2: '⚔️ 2にん', 3: '🎉 3にん', 4: '🎊 4にん' };
+            const subs = { 1: 'タイムアタック', 2: 'ふたりで たいせん', 3: 'みんなで バトル', 4: 'わいわい バトル' };
+            pRow.innerHTML = [1, 2, 3, 4].map(n => {
+                const active = state.playerCount === n;
+                return `
+                    <button onclick="setPlayers(${n})" class="py-2.5 px-2 rounded-2xl border-3 transition active:scale-95 text-center ${
+                        active ? 'bg-gradient-to-b from-pink-400 to-purple-600 text-white border-yellow-300 font-black shadow-lg scale-[1.03]' : 'bg-slate-800 text-slate-300 border-slate-600 font-bold'
+                    }">
+                        <div class="text-sm sm:text-xl font-black">${labels[n]}</div>
+                        <div class="text-[10px] sm:text-xs opacity-90">${subs[n]}</div>
+                    </button>
+                `;
+            }).join('');
+
+            const picker = document.getElementById('partnerPickerRow');
+            picker.innerHTML = Array.from({ length: state.playerCount }, (_, idx) => {
+                const partner = PARTNERS[state.slotPartnerIdx[idx] % PARTNERS.length];
+                return `
+                    <button onclick="cycleSlotPartner(${idx})" class="flex items-center gap-2 px-3 py-1.5 rounded-2xl border-2 border-white/60 shadow active:scale-95" style="background:${partner.color}dd;">
+                        <img src="${partner.img}" alt="" class="w-8 h-8 rounded-xl object-cover border border-white">
+                        <div class="text-left leading-tight">
+                            <div class="text-[10px] font-black text-yellow-200">${idx + 1}P（タッチで チェンジ）</div>
+                            <div class="text-xs sm:text-sm font-black text-white">${partner.name}</div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+
+            const dRow = document.getElementById('deckSizeRow');
+            dRow.innerHTML = DECK_SIZES.map(d => {
+                const active = state.deckCardsCount === d.cards;
+                return `
+                    <button onclick="setDeckSize(${d.cards})" class="py-2.5 px-1.5 rounded-xl border-2 transition active:scale-95 text-center ${
+                        active ? 'bg-gradient-to-b from-cyan-300 to-sky-500 text-black border-white font-black shadow-lg' : 'bg-slate-800 text-slate-200 border-slate-600 font-bold'
+                    }">
+                        <div class="text-xs sm:text-base font-black">${d.label}</div>
+                        <div class="text-[9px] sm:text-[10px] opacity-90">${d.sub}</div>
+                    </button>
+                `;
+            }).join('');
+
+            const peekRow = document.getElementById('peekToggleRow');
+            peekRow.innerHTML = [
+                { val: true,  lbl: '✨ あり！', sub: '3びょう おぼえる' },
+                { val: false, lbl: '🔥 なし！', sub: 'いきなり スタート' }
+            ].map(opt => {
+                const active = state.initialPeek === opt.val;
+                return `
+                    <button onclick="setPeek(${opt.val})" class="py-2.5 px-2 rounded-xl border-2 transition active:scale-95 text-center ${
+                        active ? 'bg-gradient-to-b from-yellow-300 to-amber-500 text-black border-white font-black shadow-lg' : 'bg-slate-800 text-slate-200 border-slate-600 font-bold'
+                    }">
+                        <div class="text-xs sm:text-sm font-black">${opt.lbl}</div>
+                        <div class="text-[9px] sm:text-[10px] opacity-90">${opt.sub}</div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setPlayers(n) { playFlipSound(true); state.playerCount = n; renderSetup(); }
+        function cycleSlotPartner(slotIdx) {
+            playFlipSound(true);
+            state.slotPartnerIdx[slotIdx] = (state.slotPartnerIdx[slotIdx] + 1) % PARTNERS.length;
+            renderSetup();
+        }
+        function setDeckSize(c) { playFlipSound(true); state.deckCardsCount = c; renderSetup(); }
+        function setPeek(v) { playFlipSound(true); state.initialPeek = v; renderSetup(); }
+
+        /* ==========================================================
+           4. ゲーム開始・カードシャッフル・開幕3秒チラ見
+        ========================================================== */
+        function shuffle(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function startMemoryGame() {
+            unlockAudio();
+            if (state.peekTimer) { clearInterval(state.peekTimer); state.peekTimer = null; }
+
+            document.getElementById('setupOverlay').classList.add('hidden');
+            document.getElementById('finaleModal').classList.add('hidden');
+
+            const cfg = DECK_SIZES.find(d => d.cards === state.deckCardsCount) || DECK_SIZES[1];
+            const pickedPokemon = shuffle(ALL_CARDS_75).slice(0, cfg.pairs);
+            const deckRaw = shuffle([...pickedPokemon, ...pickedPokemon]);
+
+            state.players = Array.from({ length: state.playerCount }, (_, idx) => {
+                const partner = PARTNERS[state.slotPartnerIdx[idx] % PARTNERS.length];
+                return {
+                    id: idx,
+                    label: `${idx + 1}P`,
+                    partner,
+                    pairs: 0,
+                    stars: 0,
+                    combo: 0,
+                    caughtList: []
+                };
+            });
+
+            state.turnIdx = 0;
+            state.flippedIndices = [];
+            state.movesCount = 0;
+            state.scansLeft = Math.max(2, state.playerCount);
+            state.startTimeMs = Date.now();
+
+            state.cards = deckRaw.map((poke, idx) => ({
+                idx,
+                poke,
+                flipped: state.initialPeek,
+                matched: false,
+                ownerColor: null,
+                ownerLabel: null,
+                scanHint: false
+            }));
+
+            renderScoreboard();
+            renderCardGrid();
+            updateScanBtnUI();
+            document.getElementById('pairsRemainLabel').textContent = cfg.pairs;
+
+            if (state.initialPeek) {
+                state.lockInput = true;
+                const banner = document.getElementById('peekCountdownBanner');
+                const secEl = document.getElementById('peekSecNum');
+                banner.classList.remove('hidden');
+                let sec = 3;
+                secEl.textContent = sec;
+                playFlipSound(true);
+
+                state.peekTimer = setInterval(() => {
+                    sec--;
+                    if (sec > 0) {
+                        secEl.textContent = sec;
+                        playFlipSound(true);
+                    } else {
+                        clearInterval(state.peekTimer);
+                        state.peekTimer = null;
+                        banner.classList.add('hidden');
+                        state.cards.forEach(c => { c.flipped = false; });
+                        state.lockInput = false;
+                        state.startTimeMs = Date.now();
+                        playFlipSound(false);
+                        renderCardGrid();
+                        updateTurnPrompt();
+                    }
+                }, 1000);
+            } else {
+                state.lockInput = false;
+                updateTurnPrompt();
+            }
+        }
+
+        function backToSetup() {
+            if (state.peekTimer) { clearInterval(state.peekTimer); state.peekTimer = null; }
+            document.getElementById('peekCountdownBanner').classList.add('hidden');
+            document.getElementById('finaleModal').classList.add('hidden');
+            document.getElementById('setupOverlay').classList.remove('hidden');
+            renderSetup();
+        }
+
+        /* ==========================================================
+           5. UI描画：スコアボード ＆ 3Dカードグリッド
+        ========================================================== */
+        function renderScoreboard() {
+            const row = document.getElementById('scoreboardRow');
+            row.innerHTML = state.players.map((p, idx) => {
+                const isTurn = idx === state.turnIdx;
+                return `
+                    <div class="h-full max-w-[220px] flex-1 rounded-2xl px-2.5 py-1 border-2 flex items-center gap-2 transition ${
+                        isTurn ? 'border-yellow-300 player-turn-active' : 'border-slate-700 opacity-85'
+                    }" style="background: linear-gradient(135deg, ${p.partner.color}dd, #1e1b4b);">
+                        <img src="${p.partner.img}" alt="" class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl object-cover border-2 border-white shrink-0">
+                        <div class="min-w-0 flex-1 leading-tight">
+                            <div class="text-[10px] sm:text-xs font-black text-yellow-200 truncate">${p.label} ${p.partner.name}</div>
+                            <div class="flex items-center gap-1.5 mt-0.5 text-xs sm:text-sm font-black">
+                                <span class="bg-black/60 px-1.5 rounded text-white">🃏${p.pairs}ペア</span>
+                                <span class="bg-black/60 px-1.5 rounded text-yellow-300">⭐${p.stars}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCardGrid() {
+            const cfg = DECK_SIZES.find(d => d.cards === state.deckCardsCount) || DECK_SIZES[1];
+            const grid = document.getElementById('memoryGrid');
+            grid.style.gridTemplateColumns = `repeat(${cfg.cols}, minmax(0, 1fr))`;
+            grid.style.gridTemplateRows = `repeat(${cfg.rows}, minmax(0, 1fr))`;
+
+            grid.innerHTML = state.cards.map(c => {
+                const flippedCls = (c.flipped || c.matched) ? 'is-flipped' : '';
+                const matchedCls = c.matched ? 'is-matched' : '';
+                const scanCls = c.scanHint ? 'scan-hint-card' : '';
+
+                return `
+                    <button onclick="handleCardTap(${c.idx})" class="card-scene relative w-full h-full min-h-0 ${flippedCls} ${matchedCls} ${scanCls} focus:outline-none">
+                        <div class="card-inner">
+                            <!-- 裏面：モンスターボール＋番号バッジ -->
+                            <div class="card-face bg-slate-900 border-2 border-amber-300/80 hover:border-white shadow-lg flex flex-col justify-between">
+                                <img src="../assets/cards/card_back.webp" alt="カードうら" class="absolute inset-0 w-full h-full object-cover">
+                                <div class="relative z-10 p-1 flex justify-between items-start">
+                                    <span class="bg-black/80 text-yellow-200 border border-yellow-400/60 text-[10px] sm:text-xs font-black px-1.5 py-0.2 rounded-lg shadow">
+                                        ${c.idx + 1}
+                                    </span>
+                                    ${c.scanHint ? '<span class="bg-yellow-300 text-black text-[10px] font-black px-1.5 rounded-full">✨ピピッ!</span>' : ''}
+                                </div>
+                            </div>
+
+                            <!-- 表面：ポケモンキラカード -->
+                            <div class="card-face card-front bg-slate-950 border-3 ${c.matched ? 'border-yellow-300 shadow-[0_0_18px_rgba(250,204,21,0.85)]' : 'border-white'} flex flex-col justify-between">
+                                <img src="../${c.poke.cardImg}" alt="${c.poke.name}" class="absolute inset-0 w-full h-full object-cover">
+                                <div class="relative z-10 p-1 flex items-start justify-between">
+                                    <span class="bg-black/80 text-yellow-300 text-[9px] sm:text-[10px] font-black px-1.5 rounded">${c.poke.emoji}${c.poke.attr}</span>
+                                    ${c.matched ? `<span class="text-white text-[9px] sm:text-[10px] font-black px-1.5 rounded-full border border-white shadow" style="background:${c.ownerColor || '#eab308'}">👑${c.ownerLabel}</span>` : ''}
+                                </div>
+                                <div class="relative z-10 bg-gradient-to-t from-black via-black/85 to-transparent pt-3 pb-1 px-1 text-center">
+                                    <span class="block text-[10px] sm:text-sm font-black text-white text-outline-sm truncate">${c.poke.name}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function updateTurnPrompt(extraMsg = '') {
+            const p = state.players[state.turnIdx];
+            const el = document.getElementById('statusMessage');
+            if (extraMsg) {
+                el.textContent = extraMsg;
+            } else if (state.playerCount === 1) {
+                el.textContent = `🃏 カードを 2まい めくって ペアを そろえよう！（てかず：${state.movesCount}かい）`;
+            } else {
+                el.textContent = `👉 ${p.label} ${p.partner.name} の ばん！ カードを 2まい タッチしてね！`;
+            }
+        }
+
+        function updateScanBtnUI() {
+            const btn = document.getElementById('rotomScanBtn');
+            document.getElementById('scanLeftBadge').textContent = state.scansLeft;
+            btn.disabled = state.scansLeft <= 0;
+            btn.className = state.scansLeft > 0
+                ? 'px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-300 to-cyan-300 text-black border-2 border-white text-xs sm:text-sm font-black shadow-lg active:scale-95 flex items-center gap-1'
+                : 'px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-slate-800 text-slate-500 border border-slate-700 text-xs sm:text-sm font-black flex items-center gap-1';
+        }
+
+        /* ==========================================================
+           6. カードめくり判定 ＆ コンボ ＆ ロトムスキャン
+        ========================================================== */
+        function handleCardTap(idx) {
+            unlockAudio();
+            if (state.lockInput) return;
+            const card = state.cards[idx];
+            if (!card || card.flipped || card.matched) return;
+
+            card.flipped = true;
+            card.scanHint = false;
+            state.flippedIndices.push(idx);
+
+            playFlipSound(state.flippedIndices.length === 2);
+            playPokemonCry(card.poke);
+            renderCardGrid();
+
+            if (state.flippedIndices.length === 2) {
+                state.lockInput = true;
+                state.movesCount++;
+                const [i1, i2] = state.flippedIndices;
+                const c1 = state.cards[i1];
+                const c2 = state.cards[i2];
+
+                if (c1.poke.id === c2.poke.id) {
+                    setTimeout(() => handlePairMatched(c1, c2), 520);
+                } else {
+                    setTimeout(() => handlePairMissed(c1, c2), 1050);
+                }
+            }
+        }
+
+        function handlePairMatched(c1, c2) {
+            const p = state.players[state.turnIdx];
+            p.pairs += 1;
+            p.combo += 1;
+            const bonusStars = p.combo >= 2 ? 2 : 1;
+            p.stars += bonusStars;
+            p.caughtList.push(c1.poke);
+
+            c1.matched = true;
+            c2.matched = true;
+            c1.ownerColor = p.partner.color;
+            c2.ownerColor = p.partner.color;
+            c1.ownerLabel = p.label;
+            c2.ownerLabel = p.label;
+
+            state.flippedIndices = [];
+            playPairChime(p.combo);
+            spawnConfetti(p.combo >= 2 ? 65 : 35);
+
+            const remain = state.cards.filter(c => !c.matched).length / 2;
+            document.getElementById('pairsRemainLabel').textContent = remain;
+            renderScoreboard();
+            renderCardGrid();
+
+            if (remain === 0) {
+                setTimeout(() => showFinaleModal(), 650);
+                return;
+            }
+
+            const comboTxt = p.combo >= 2 ? `🔥 ${p.combo}れんぞく コンボ！（⭐+${bonusStars}）` : `🎉 ${c1.poke.name} ゲット！`;
+            updateTurnPrompt(
+                state.playerCount > 1
+                    ? `${comboTxt} もう 1かい ${p.label} ${p.partner.name} が めくれるよ！！`
+                    : `${comboTxt} どんどん そろえよう！！`
+            );
+            state.lockInput = false;
+        }
+
+        function handlePairMissed(c1, c2) {
+            const p = state.players[state.turnIdx];
+            p.combo = 0;
+            c1.flipped = false;
+            c2.flipped = false;
+            state.flippedIndices = [];
+            playMissSound();
+
+            if (state.playerCount > 1) {
+                state.turnIdx = (state.turnIdx + 1) % state.players.length;
+            }
+            renderScoreboard();
+            renderCardGrid();
+            updateTurnPrompt();
+            state.lockInput = false;
+        }
+
+        function useRotomScan() {
+            unlockAudio();
+            if (state.lockInput || state.scansLeft <= 0) return;
+            const unopened = state.cards.filter(c => !c.matched && !c.flipped);
+            if (unopened.length < 2) return;
+
+            // ペアになっている2枚を探してキラキラ発光させる！
+            const byId = {};
+            let targetPair = null;
+            for (const c of unopened) {
+                if (byId[c.poke.id]) {
+                    targetPair = [byId[c.poke.id], c];
+                    break;
+                }
+                byId[c.poke.id] = c;
+            }
+            if (!targetPair) return;
+
+            state.scansLeft--;
+            updateScanBtnUI();
+            playPairChime(2);
+
+            targetPair[0].scanHint = true;
+            targetPair[1].scanHint = true;
+            renderCardGrid();
+            updateTurnPrompt(`📱 ロトムスキャン！ キラキラ ひかっている 2まい（${targetPair[0].idx + 1}ばんと ${targetPair[1].idx + 1}ばん）が ペアロト！！`);
+
+            setTimeout(() => {
+                targetPair[0].scanHint = false;
+                targetPair[1].scanHint = false;
+                renderCardGrid();
+            }, 2400);
+        }
+
+        /* ==========================================================
+           7. 🏆 フィナーレ表彰式
+        ========================================================== */
+        function showFinaleModal() {
+            spawnConfetti(130);
+            playSysVoice('memory_clear');
+
+            const elapsedSec = Math.max(1, Math.round((Date.now() - state.startTimeMs) / 1000));
+            const sorted = [...state.players].sort((a, b) => (b.pairs * 100 + b.stars) - (a.pairs * 100 + a.stars));
+            const winner = sorted[0];
+
+            const titleEl = document.getElementById('finaleTitle');
+            if (state.playerCount === 1) {
+                titleEl.textContent = `🏆 ${elapsedSec}びょう・${state.movesCount}かいで パーフェクトクリア！！`;
+            } else {
+                titleEl.textContent = `🏆 ゆうしょう：${winner.label} ${winner.partner.name}（${winner.pairs}ペア・⭐${winner.stars}）！！`;
+            }
+
+            const resGrid = document.getElementById('finaleResultsGrid');
+            resGrid.className = `grid ${state.players.length <= 2 ? `grid-cols-${state.players.length}` : 'grid-cols-2'} gap-3 pt-1`;
+            resGrid.innerHTML = sorted.map((p, rankIdx) => `
+                <div class="rounded-2xl p-3 border-2 ${rankIdx === 0 ? 'border-yellow-300 bg-amber-950/50 shadow-[0_0_24px_rgba(250,204,21,0.65)]' : 'border-slate-700 bg-slate-900'} flex flex-col items-center gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-black ${rankIdx === 0 ? 'bg-yellow-300 text-black' : 'bg-slate-700 text-white'}">
+                            ${rankIdx === 0 ? '👑 1い' : `${rankIdx + 1}い`}
+                        </span>
+                        <img src="${p.partner.img}" alt="" class="w-10 h-10 rounded-xl object-cover border-2 border-white">
+                        <div class="text-left">
+                            <div class="text-sm sm:text-base font-black text-white">${p.label} ${p.partner.name}</div>
+                            <div class="text-xs font-black text-yellow-300">🃏 ${p.pairs}ペア ／ ⭐×${p.stars}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center gap-1 flex-wrap">
+                        ${p.caughtList.map(pk => `<img src="../${pk.cardImg}" title="${pk.name}" class="w-8 h-8 rounded-lg object-cover border border-white/50">`).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('finaleModal').classList.remove('hidden');
+        }
+
+        /* ==========================================================
+           8. 紙吹雪エフェクト
+        ========================================================== */
+        const fxCanvas = document.getElementById('fxCanvas');
+        const fxCtx = fxCanvas.getContext('2d');
+        let confetti = [];
+
+        function resizeFx() {
+            fxCanvas.width = window.innerWidth;
+            fxCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeFx);
+
+        function spawnConfetti(count = 40) {
+            const colors = ['#fde047', '#f472b6', '#c084fc', '#38bdf8', '#34d399'];
+            for (let i = 0; i < count; i++) {
+                confetti.push({
+                    x: window.innerWidth * (0.2 + Math.random() * 0.6),
+                    y: window.innerHeight * (0.2 + Math.random() * 0.35),
+                    vx: (Math.random() - 0.5) * 11,
+                    vy: -Math.random() * 9 - 2,
+                    size: Math.random() * 8 + 5,
+                    rot: Math.random() * Math.PI * 2,
+                    vrot: (Math.random() - 0.5) * 0.25,
+                    alpha: 1,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+        }
+
+        function animateFx() {
+            fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+            for (let i = confetti.length - 1; i >= 0; i--) {
+                const c = confetti[i];
+                c.x += c.vx; c.y += c.vy; c.vy += 0.22; c.rot += c.vrot; c.alpha -= 0.013;
+                if (c.alpha <= 0 || c.y > fxCanvas.height + 30) { confetti.splice(i, 1); continue; }
+                fxCtx.save();
+                fxCtx.globalAlpha = c.alpha;
+                fxCtx.translate(c.x, c.y);
+                fxCtx.rotate(c.rot);
+                fxCtx.fillStyle = c.color;
+                fxCtx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size * 0.65);
+                fxCtx.restore();
+            }
+            requestAnimationFrame(animateFx);
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            resizeFx();
+            renderSetup();
+            animateFx();
+            await loadManifest();
+        });
+    </script>
+</body>
+</html>

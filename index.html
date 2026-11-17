@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ポケモンゲーム">
+    <meta name="theme-color" content="#ef4444">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
+    <title>ポケモン わくわくゲームランド！</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0;
+            min-height: 100dvh;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #0b1021;
+            background-image:
+                radial-gradient(circle at 15% 18%, rgba(250, 204, 21, 0.25) 0%, transparent 45%),
+                radial-gradient(circle at 85% 22%, rgba(239, 68, 68, 0.22) 0%, transparent 45%),
+                radial-gradient(circle at 20% 85%, rgba(56, 189, 248, 0.20) 0%, transparent 48%),
+                radial-gradient(circle at 80% 82%, rgba(168, 85, 247, 0.20) 0%, transparent 48%);
+            color: #fff;
+            user-select: none;
+        }
+        .font-manga { font-family: 'Dela Gothic One', cursive, sans-serif; }
+        .text-stroke-black {
+            text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 3px 8px rgba(0,0,0,0.85);
+        }
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+        }
+        .float-card { animation: floatSlow 3.6s ease-in-out infinite; }
+        @keyframes pokeballSpin {
+            0%, 100% { transform: rotate(-10deg) scale(1); }
+            50% { transform: rotate(10deg) scale(1.06); }
+        }
+        .wobble-ball { animation: pokeballSpin 1.8s ease-in-out infinite; }
+    </style>
+</head>
+<body class="flex flex-col justify-between p-3 sm:p-6">
+
+    <audio id="hubAudio" src="./assets/audio/sys/test.mp3?v=1" preload="auto" playsinline class="hidden"></audio>
+    <audio id="cryAudio" src="./assets/audio/cries/dex_25.mp3" preload="auto" playsinline class="hidden"></audio>
+
+    <!-- ヘッダー -->
+    <header class="max-w-6xl w-full mx-auto text-center pt-1 sm:pt-2">
+        <div class="inline-flex items-center gap-2 bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400 text-black font-black text-xs sm:text-sm px-4 py-1 rounded-full border-2 border-white shadow-lg mb-2">
+            <img src="./assets/icons/icon-192.png" alt="" class="w-5 h-5 rounded-full wobble-ball">
+            <span>🔴 ポケモン わくわく 4だいゲーム ポータル ⚡</span>
+        </div>
+        <h1 class="font-manga text-2xl sm:text-5xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-amber-300 to-orange-500 drop-shadow-[0_4px_14px_rgba(250,204,21,0.55)]">
+            ポケモン わくわくゲームランド！
+        </h1>
+        <p class="mt-1.5 text-xs sm:text-base font-extrabold text-sky-200">
+            あそびたい ゲームを タッチして ぼうけんに しゅっぱつだ！ ポケモン ゲットだぜ！！
+        </p>
+        <div class="mt-2.5 flex items-center justify-center gap-2 flex-wrap">
+            <button onclick="playGreeting()" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-yellow-300 to-amber-400 hover:brightness-110 border-2 border-white text-black text-xs sm:text-sm font-black shadow-lg active:scale-95 transition">
+                <span>🔊</span><span>ピカチュウ＆サトシ風の かけごえをきく！</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 4大ゲーム選択カードグリッド (2x2) -->
+    <main class="max-w-6xl w-full mx-auto my-4 sm:my-5 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 items-stretch">
+
+        <!-- 冒険①：ビンゴ大会 -->
+        <a href="./bingo/index.html" class="float-card group relative rounded-3xl p-1.5 bg-gradient-to-br from-yellow-300 via-amber-400 to-red-600 shadow-[0_0_32px_rgba(250,204,21,0.5)] hover:shadow-[0_0_50px_rgba(250,204,21,0.9)] active:scale-[0.98] transition block">
+            <div class="h-full bg-slate-950/95 rounded-[20px] p-4 sm:p-5 flex flex-col justify-between overflow-hidden relative">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-2.5">
+                        <span class="bg-gradient-to-r from-yellow-300 to-amber-500 text-black font-black text-xs px-3 py-0.5 rounded-full">⚡ ぼうけん①・公開中！</span>
+                        <span class="text-xs font-bold text-yellow-200 bg-amber-950/90 border border-yellow-400/50 px-2.5 py-0.5 rounded-full">1〜3枚対戦・なきごえ＆実況</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 my-2">
+                        <img src="./assets/cards/leader_pikachu.webp" alt="ピカチュウ" class="w-full aspect-square object-cover rounded-2xl border-2 border-yellow-300 shadow-lg group-hover:scale-105 transition">
+                        <img src="./assets/cards/leader_charizard.webp" alt="リザードン" class="w-full aspect-square object-cover rounded-2xl border-2 border-orange-400 shadow-lg group-hover:scale-105 transition delay-75">
+                        <img src="./assets/cards/leader_eevee.webp" alt="イーブイ" class="w-full aspect-square object-cover rounded-2xl border-2 border-pink-300 shadow-lg group-hover:scale-105 transition delay-150">
+                    </div>
+
+                    <h2 class="font-manga text-lg sm:text-2xl text-white text-stroke-black mt-2">
+                        マスターボール級・ポケモンビンゴ大会！
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300 font-bold mt-1 leading-relaxed">
+                        12ひきの あいぼうポケモンから 専用ビンゴカードを選ぼう！全75枚のキラカード＆本物のなきごえ＋ロトム図鑑ボイスつき！
+                    </p>
+                </div>
+
+                <div class="mt-4 w-full py-2.5 rounded-2xl font-manga text-sm sm:text-lg text-center text-black bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 border-2 border-white shadow-xl group-hover:brightness-110 transition">
+                    🔴 いまから ビンゴで あそぶ！！ →
+                </div>
+            </div>
+        </a>
+
+        <!-- 冒険②：すごろく大冒険 -->
+        <a href="./sugoroku/index.html" class="float-card group relative rounded-3xl p-1.5 bg-gradient-to-br from-cyan-300 via-sky-500 to-indigo-600 shadow-[0_0_32px_rgba(56,189,248,0.5)] hover:shadow-[0_0_50px_rgba(56,189,248,0.9)] active:scale-[0.98] transition block" style="animation-delay: 0.6s;">
+            <div class="h-full bg-slate-950/95 rounded-[20px] p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-2.5">
+                        <span class="bg-gradient-to-r from-cyan-300 to-sky-400 text-black font-black text-xs px-3 py-0.5 rounded-full">🎲 ぼうけん②・公開中！</span>
+                        <span class="text-xs font-bold text-cyan-200 bg-sky-950 border border-cyan-400/50 px-2.5 py-0.5 rounded-full">2〜6にん・かんじゼロ</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 my-2">
+                        <img src="./assets/cards/leader_lucario.webp" alt="ルカリオ" class="w-full aspect-square object-cover rounded-2xl border-2 border-sky-400 shadow-lg group-hover:scale-105 transition">
+                        <img src="./assets/items/trophy_goal.webp" alt="トロフィー" class="w-full aspect-square object-cover rounded-2xl border-2 border-yellow-300 shadow-lg group-hover:scale-105 transition delay-75">
+                        <img src="./assets/cards/leader_mewtwo.webp" alt="ミュウツー" class="w-full aspect-square object-cover rounded-2xl border-2 border-purple-400 shadow-lg group-hover:scale-105 transition delay-150">
+                    </div>
+
+                    <h2 class="font-manga text-lg sm:text-2xl text-white text-stroke-black mt-2">
+                        ポケモン すごろく だいぼうけん！
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300 font-bold mt-1 leading-relaxed">
+                        2〜6にんで わいわい ボードゲーム！10まんボルト れんだ・モンスターボール 3たく・ロケットだん＆ミュウツー バトルつき！
+                    </p>
+                </div>
+
+                <div class="mt-4 w-full py-2.5 rounded-2xl font-manga text-sm sm:text-lg text-center text-black bg-gradient-to-r from-cyan-300 via-sky-400 to-emerald-400 border-2 border-white shadow-xl group-hover:brightness-110 transition">
+                    🎲 いまから すごろくで あそぶ！！ →
+                </div>
+            </div>
+        </a>
+
+        <!-- 冒険③：ポケモンをさがせ！（ウォーリーをさがせ！風） -->
+        <a href="./sagase/index.html" class="float-card group relative rounded-3xl p-1.5 bg-gradient-to-br from-emerald-300 via-green-500 to-teal-600 shadow-[0_0_32px_rgba(52,211,153,0.5)] hover:shadow-[0_0_50px_rgba(52,211,153,0.9)] active:scale-[0.98] transition block" style="animation-delay: 1.2s;">
+            <div class="h-full bg-slate-950/95 rounded-[20px] p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-2.5">
+                        <span class="bg-gradient-to-r from-lime-300 to-emerald-400 text-black font-black text-xs px-3 py-0.5 rounded-full">🔍 ぼうけん③・NEW！</span>
+                        <span class="text-xs font-bold text-emerald-200 bg-emerald-950 border border-emerald-400/50 px-2.5 py-0.5 rounded-full">1〜4にん・パノラマさがしえ</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 my-2">
+                        <img src="./sagase/assets/world_forest.webp" alt="ピクニックのもり" class="w-full aspect-square object-cover rounded-2xl border-2 border-lime-300 shadow-lg group-hover:scale-105 transition">
+                        <img src="./sagase/assets/world_beach.webp" alt="トロピカルビーチ" class="w-full aspect-square object-cover rounded-2xl border-2 border-cyan-300 shadow-lg group-hover:scale-105 transition delay-75">
+                        <img src="./sagase/assets/world_carnival.webp" alt="ナイトカーニバル" class="w-full aspect-square object-cover rounded-2xl border-2 border-pink-400 shadow-lg group-hover:scale-105 transition delay-150">
+                    </div>
+
+                    <h2 class="font-manga text-lg sm:text-2xl text-white text-stroke-black mt-2">
+                        ポケモンをさがせ！ だいパノラマたんけん！
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300 font-bold mt-1 leading-relaxed">
+                        「ウォーリーをさがせ！」風！最大145ひきが ぎっしり かくれた 4つの 大パノラマから おだいのポケモン＆いろちがいを みつけよう！
+                    </p>
+                </div>
+
+                <div class="mt-4 w-full py-2.5 rounded-2xl font-manga text-sm sm:text-lg text-center text-black bg-gradient-to-r from-lime-300 via-emerald-400 to-teal-300 border-2 border-white shadow-xl group-hover:brightness-110 transition">
+                    🔍 いまから ポケモンさがしで あそぶ！！ →
+                </div>
+            </div>
+        </a>
+
+        <!-- 冒険④：キラカード神経衰弱 -->
+        <a href="./memory/index.html" class="float-card group relative rounded-3xl p-1.5 bg-gradient-to-br from-pink-300 via-fuchsia-500 to-purple-700 shadow-[0_0_32px_rgba(232,121,249,0.5)] hover:shadow-[0_0_50px_rgba(232,121,249,0.9)] active:scale-[0.98] transition block" style="animation-delay: 1.8s;">
+            <div class="h-full bg-slate-950/95 rounded-[20px] p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-2.5">
+                        <span class="bg-gradient-to-r from-pink-300 to-fuchsia-400 text-black font-black text-xs px-3 py-0.5 rounded-full">🃏 ぼうけん④・NEW！</span>
+                        <span class="text-xs font-bold text-pink-200 bg-fuchsia-950 border border-pink-400/50 px-2.5 py-0.5 rounded-full">1〜4にん・12〜30まい</span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 my-2">
+                        <img src="./assets/cards/card_back.webp" alt="モンスターボールカード" class="w-full aspect-square object-cover rounded-2xl border-2 border-red-400 shadow-lg group-hover:scale-105 transition">
+                        <img src="./assets/cards/leader_mew.webp" alt="ミュウ" class="w-full aspect-square object-cover rounded-2xl border-2 border-pink-300 shadow-lg group-hover:scale-105 transition delay-75">
+                        <img src="./assets/cards/leader_sylveon.webp" alt="ニンフィア" class="w-full aspect-square object-cover rounded-2xl border-2 border-fuchsia-300 shadow-lg group-hover:scale-105 transition delay-150">
+                    </div>
+
+                    <h2 class="font-manga text-lg sm:text-2xl text-white text-stroke-black mt-2">
+                        ポケモン キラカード しんけいすいじゃく！
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-300 font-bold mt-1 leading-relaxed">
+                        モンスターボールの カードを めくって キラカードを そろえよう！さいしょの 3びょう チラみ＆ロトムの スキャンおたすけつき！
+                    </p>
+                </div>
+
+                <div class="mt-4 w-full py-2.5 rounded-2xl font-manga text-sm sm:text-lg text-center text-black bg-gradient-to-r from-pink-300 via-fuchsia-400 to-amber-300 border-2 border-white shadow-xl group-hover:brightness-110 transition">
+                    🃏 いまから しんけいすいじゃくで あそぶ！！ →
+                </div>
+            </div>
+        </a>
+
+    </main>
+
+    <footer class="max-w-6xl w-full mx-auto text-center text-[11px] sm:text-xs text-slate-400 pb-1">
+        💡 タブレットやスマホの「ホーム画面に追加」をしておくと、いつでもフル画面アプリとしてすぐ遊べます！
+    </footer>
+
+    <script>
+        function playGreeting() {
+            const hub = document.getElementById('hubAudio');
+            const cry = document.getElementById('cryAudio');
+            hub.currentTime = 0;
+            hub.play().catch(() => {
+                cry.currentTime = 0;
+                cry.play().catch(() => {});
+            });
+        }
+    </script>
+</body>
+</html>

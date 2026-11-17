@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ポケモンビンゴ">
+    <meta name="theme-color" content="#ef4444">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="../assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
+    <title>ポケモン マスターボール級・大集結ビンゴ大会！</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100dvh;
+            max-height: 100dvh;
+            overflow: hidden;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #0b1021;
+            background-image:
+                radial-gradient(circle at 15% 18%, rgba(250, 204, 21, 0.22) 0%, transparent 45%),
+                radial-gradient(circle at 85% 22%, rgba(239, 68, 68, 0.18) 0%, transparent 45%),
+                radial-gradient(circle at 50% 88%, rgba(56, 189, 248, 0.18) 0%, transparent 50%);
+            color: #fff;
+            user-select: none;
+        }
+
+        .font-manga { font-family: 'Dela Gothic One', cursive, sans-serif; }
+
+        .speed-lines {
+            background: repeating-conic-gradient(
+                from 0deg,
+                rgba(250, 204, 21, 0.09) 0deg 2.5deg,
+                transparent 2.5deg 8deg
+            );
+        }
+
+        .speed-lines-intense {
+            background: repeating-conic-gradient(
+                from 0deg,
+                rgba(253, 224, 71, 0.28) 0deg 3deg,
+                rgba(239, 68, 68, 0.16) 3deg 6deg,
+                transparent 6deg 12deg
+            );
+            animation: spinSlow 20s linear infinite;
+        }
+
+        @keyframes spinSlow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulseAuraGold {
+            0%, 100% { box-shadow: 0 0 12px rgba(250, 204, 21, 0.75), inset 0 0 12px rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 28px rgba(254, 240, 138, 1), inset 0 0 22px rgba(250, 204, 21, 0.75); }
+        }
+        .aura-reach-active { animation: pulseAuraGold 1.2s infinite; }
+
+        @keyframes screenShake {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-6px, -4px); }
+            40% { transform: translate(6px, 3px); }
+            60% { transform: translate(-4px, 4px); }
+            80% { transform: translate(4px, -3px); }
+        }
+        .shake-active { animation: screenShake 0.36s cubic-bezier(.36,.07,.19,.97) both; }
+
+        @keyframes ballWobble {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-22deg) scale(1.1); }
+            75% { transform: rotate(22deg) scale(1.1); }
+        }
+        .ball-wobble-anim { animation: ballWobble 0.25s ease-in-out infinite; }
+
+        @keyframes holoSweep {
+            0% { transform: translateX(-140%) skewX(-22deg); }
+            45%, 100% { transform: translateX(220%) skewX(-22deg); }
+        }
+        .holo-card-opened::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.36) 50%, transparent 100%);
+            width: 55%;
+            pointer-events: none;
+            animation: holoSweep 3.6s ease-in-out infinite;
+        }
+
+        @keyframes latestHitPulse {
+            0% { transform: scale(1.07); box-shadow: 0 0 24px #fef08a, inset 0 0 14px #fff; }
+            100% { transform: scale(0.98); box-shadow: 0 0 14px #fbbf24, inset 0 0 8px #fef08a; }
+        }
+        .cell-latest-hit {
+            animation: latestHitPulse 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite alternate;
+            border: 2.5px solid #fef08a !important;
+            z-index: 15;
+        }
+
+        @keyframes bingoLineGlow {
+            0%, 100% { box-shadow: 0 0 14px #fbbf24, inset 0 0 12px rgba(254, 240, 138, 0.85); border-color: #ffffff; }
+            50% { box-shadow: 0 0 26px #fef08a, inset 0 0 20px rgba(255, 255, 255, 0.95); border-color: #fde047; }
+        }
+        .cell-bingo-line {
+            animation: bingoLineGlow 1.05s infinite !important;
+            border-width: 2.5px !important;
+            z-index: 12;
+        }
+
+        @keyframes eqBounce {
+            0%, 100% { height: 4px; }
+            50% { height: 13px; }
+        }
+        .eq-bar-1 { animation: eqBounce 0.45s ease-in-out infinite; }
+        .eq-bar-2 { animation: eqBounce 0.45s ease-in-out 0.15s infinite; }
+        .eq-bar-3 { animation: eqBounce 0.45s ease-in-out 0.30s infinite; }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.7); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #fbbf24; border-radius: 4px; }
+
+        .text-stroke-black {
+            text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0px 2px 5px rgba(0,0,0,0.9);
+        }
+        .text-stroke-xs {
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between select-none">
+
+    <!-- タブレット完全対応：単一持続型オーディオ要素 -->
+    <audio id="animeVoicePlayer" preload="auto" playsinline class="hidden"></audio>
+
+    <!-- 背景パーティクル＆モンスターボール花火キャンバス -->
+    <canvas id="sparkleCanvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+    <!-- 1. 上部ヘッダー (6.5dvh 固定) -->
+    <header class="relative z-20 h-[6.5dvh] min-h-[44px] max-h-[58px] bg-gradient-to-r from-slate-950 via-red-950 to-slate-950 border-b-2 border-yellow-400 px-2 sm:px-3 flex items-center justify-between gap-1.5 shrink-0">
+        <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <a href="../index.html" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-yellow-400/70 text-yellow-200 font-bold text-[10px] sm:text-xs flex items-center gap-1 shrink-0 active:scale-95 transition" title="ポータルへ戻る">
+                <span>🏠</span><span class="hidden md:inline">一覧</span>
+            </a>
+            <img src="../assets/icons/icon-192.png" alt="ポケモンビンゴ" class="w-8 h-8 rounded-lg border border-yellow-300 shadow shrink-0 object-cover">
+            <div class="truncate">
+                <div class="flex items-center gap-1.5">
+                    <span class="hidden sm:inline-block bg-gradient-to-r from-red-600 to-amber-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded shrink-0">MASTER級</span>
+                    <h1 class="font-manga text-xs sm:text-base md:text-lg text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-amber-300 to-orange-400 truncate">
+                        ポケモン大集結・キラカードビンゴ！
+                    </h1>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+            <button id="playerCountBtn" onclick="cyclePlayerCount()" class="px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-indigo-950/90 hover:bg-indigo-900 border border-indigo-400 text-indigo-100 flex items-center gap-1 shadow active:scale-95 transition">
+                <span id="playerCountIcon">👥</span>
+                <span id="playerCountText">3枚対戦</span>
+            </button>
+
+            <button onclick="openOshiModal(0)" class="px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-gradient-to-r from-red-600 to-amber-600 hover:from-red-500 hover:to-amber-500 border border-yellow-200 text-yellow-100 flex items-center gap-1 shadow active:scale-95 transition">
+                <span>🔴</span>
+                <span>相棒選択</span>
+            </button>
+
+            <button id="voiceModeBtn" onclick="cycleVoiceMode()" class="px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-amber-900/90 hover:bg-amber-800 border border-amber-400 text-amber-100 flex items-center gap-1 shadow active:scale-95 transition">
+                <span id="voiceModeIcon">🔥</span>
+                <span id="voiceModeText">声:フル実況</span>
+            </button>
+
+            <button onclick="testVoiceEngine()" class="px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-cyan-950 hover:bg-cyan-900 border border-cyan-400 text-cyan-200 flex items-center gap-1 shadow active:scale-95 transition" title="音声テスト">
+                <span>🔊</span>
+                <span class="hidden md:inline">声テスト</span>
+            </button>
+
+            <button onclick="openPokedexModal()" class="px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-slate-800 hover:bg-slate-700 border border-yellow-400/70 text-yellow-300 flex items-center gap-1 shadow active:scale-95 transition">
+                <span>📖</span>
+                <span class="hidden sm:inline">図鑑</span><span>(<span id="headerDrawnCount">0</span>/75)</span>
+            </button>
+
+            <button onclick="openResetModal()" class="px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-red-950 hover:bg-red-900 border border-red-500 text-red-200 flex items-center gap-1 shadow active:scale-95 transition">
+                <span>🔄</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 2. メインステージ (93.5dvh 固定) -->
+    <main id="mainStage" class="relative z-10 h-[93.5dvh] w-full max-w-[1720px] mx-auto px-1.5 sm:px-3 py-1.5 flex flex-col justify-between gap-1.5 overflow-hidden">
+
+        <!-- 上段：モンスターボール抽選ステージ (24.5dvh) -->
+        <section class="h-[24.5dvh] min-h-[146px] grid grid-cols-12 gap-2 shrink-0">
+
+            <div class="col-span-12 lg:col-span-8 bg-gradient-to-b from-slate-900/95 via-slate-950/95 to-black border-2 border-yellow-400/90 rounded-2xl p-2 sm:p-2.5 shadow-[0_0_24px_rgba(250,204,21,0.22)] relative overflow-hidden flex flex-col justify-between">
+                <div class="speed-lines absolute inset-0 pointer-events-none"></div>
+
+                <!-- モンスターボール揺れフラッシュ演出オーバーレイ -->
+                <div id="pokeballSpinOverlay" class="hidden absolute inset-0 z-30 bg-slate-950/92 rounded-2xl flex items-center justify-center gap-4 px-4">
+                    <img id="spinBallImg" src="../assets/items/pokeball_roulette.webp" alt="ボール" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-white shadow-[0_0_25px_rgba(250,204,21,0.9)] ball-wobble-anim">
+                    <div>
+                        <div id="spinBallBadge" class="text-xs sm:text-sm text-yellow-300 font-black tracking-wider animate-pulse">モンスターボールが ゆれているぞ…！</div>
+                        <div id="spinBallSubtext" class="text-sm sm:text-xl font-manga text-white mt-0.5">どのポケモンが とびだすかな！？</div>
+                    </div>
+                </div>
+
+                <!-- 登場ポケモンカード＋図鑑解説＋抽選ボタン -->
+                <div class="relative z-10 flex items-center gap-2 sm:gap-3 flex-1 min-h-0">
+
+                    <button id="summonCardShowcase" onclick="openCurrentCardZoom()" class="relative w-[70px] h-[88px] sm:w-[88px] sm:h-[106px] rounded-xl p-0.5 bg-gradient-to-br from-yellow-300 via-amber-400 to-red-600 shadow-[0_0_20px_rgba(250,204,21,0.75)] shrink-0 overflow-hidden group active:scale-95 transition">
+                        <div class="relative w-full h-full rounded-[10px] overflow-hidden bg-slate-950 flex flex-col justify-between">
+                            <img id="currentCardImg" src="../assets/cards/free.webp" alt="ポケモンカード" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                            <div class="relative z-10 flex items-center justify-between px-1 pt-0.5">
+                                <span id="currentNumberBadge" class="bg-black/80 text-yellow-300 border border-yellow-400/60 font-black text-[9px] sm:text-[10px] px-1 rounded leading-tight">待機</span>
+                                <span id="currentRarityBadge" class="bg-gradient-to-r from-yellow-300 to-amber-500 text-black font-black text-[8px] px-1 rounded leading-tight">★</span>
+                            </div>
+                            <div class="relative z-10 bg-gradient-to-t from-black via-black/80 to-transparent pt-3 pb-0.5 px-1 text-center">
+                                <span id="currentAttrBadge" class="text-[8px] sm:text-[9px] font-black text-yellow-200 truncate block leading-tight">マスターボール</span>
+                            </div>
+                        </div>
+                    </button>
+
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-1 mb-0.5">
+                            <span id="currentRankTag" class="bg-gradient-to-r from-red-500 to-amber-500 text-white font-black text-[9px] sm:text-xs px-1.5 py-0.2 rounded">ポケモンビンゴ・開幕待機</span>
+                            <span id="currentMoveTag" class="text-[9px] sm:text-xs font-bold text-cyan-200 bg-cyan-950/90 border border-cyan-400/50 px-1.5 py-0.2 rounded truncate max-w-[180px] sm:max-w-xs">相棒ポケモンを選んでスタート！</span>
+                            <button onclick="replayCurrentVoice()" class="text-[9px] sm:text-[10px] bg-slate-800 hover:bg-slate-700 text-yellow-300 border border-yellow-400/60 px-1.5 py-0.2 rounded font-bold active:scale-95 flex items-center gap-0.5">
+                                <span>🔊</span><span>なきごえ＆図鑑</span>
+                            </button>
+                            <div id="speakingIndicator" class="hidden items-center gap-1 bg-red-600/90 border border-yellow-300 text-white text-[9px] sm:text-[10px] font-black px-2 py-0.2 rounded-full shadow">
+                                <span class="inline-flex items-end gap-0.5 h-3">
+                                    <i class="w-0.5 bg-yellow-200 eq-bar-1 block"></i>
+                                    <i class="w-0.5 bg-yellow-200 eq-bar-2 block"></i>
+                                    <i class="w-0.5 bg-yellow-200 eq-bar-3 block"></i>
+                                </span>
+                                <span id="speakingLabel">ロトム図鑑解説中</span>
+                            </div>
+                        </div>
+
+                        <h2 id="currentCharName" class="font-manga text-sm sm:text-xl md:text-2xl text-white text-stroke-black truncate leading-tight">
+                            ボールを投げて ポケモンゲットだぜ！
+                        </h2>
+
+                        <p id="currentQuote" class="mt-0.5 text-[10px] sm:text-xs font-bold text-yellow-200 bg-black/70 border-l-4 border-red-500 pl-2 py-0.5 rounded-r line-clamp-1">
+                            「ボール抽選ボタンを押すと、実況ボイス＆本物のポケモンのなきごえ＆ロトム図鑑解説が流れるぞ！！」
+                        </p>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5 shrink-0 w-32 sm:w-44">
+                        <button id="drawButton" onclick="triggerPokeballDraw(false)" class="w-full py-2 sm:py-2.5 px-2 rounded-xl font-manga text-xs sm:text-base text-white bg-gradient-to-r from-red-600 via-amber-500 to-yellow-500 hover:brightness-110 border-2 border-white shadow-[0_0_18px_rgba(239,68,68,0.85)] active:scale-95 transition flex items-center justify-center gap-1">
+                            <span>🔴</span>
+                            <span class="text-stroke-black">ボール抽選！</span>
+                        </button>
+                        <button id="quickDrawButton" onclick="triggerPokeballDraw(true)" class="w-full py-1 sm:py-1.5 px-2 rounded-lg font-bold text-[10px] sm:text-xs text-yellow-200 bg-indigo-950/90 hover:bg-indigo-900 border border-yellow-400/80 shadow active:scale-95 transition flex items-center justify-center gap-1">
+                            <span>⚡</span>
+                            <span>でんこうせっか抽選</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 下段：横1列ゲット履歴バー -->
+                <div class="relative z-10 h-8 bg-black/80 border border-yellow-400/40 rounded-xl px-2 flex items-center gap-2 shrink-0">
+                    <div class="text-[10px] sm:text-xs font-black text-yellow-300 shrink-0 flex items-center gap-1">
+                        <span>🔴登場順:</span>
+                        <span class="bg-yellow-500/20 border border-yellow-400 text-white px-1.5 rounded text-[10px]" id="drawnCounterBadge">0/75</span>
+                    </div>
+                    <div id="horizontalHistoryBar" class="flex-1 flex items-center gap-1.5 overflow-x-auto whitespace-nowrap py-0.5">
+                        <span class="text-[11px] text-slate-400 italic">まだ 登場した ポケモンは いないよ…</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：戦況ボード＆ロトム実況ログ -->
+            <div class="hidden lg:flex lg:col-span-4 bg-gradient-to-b from-slate-900/95 via-slate-950/95 to-black border-2 border-sky-400/80 rounded-2xl p-2.5 flex-col justify-between overflow-hidden">
+                <div id="miniScoreboard" class="grid grid-cols-3 gap-1.5 shrink-0 mb-1.5"></div>
+                <div id="liveCommentaryBox" class="flex-1 bg-black/80 border border-slate-700 rounded-xl p-2 overflow-y-auto space-y-1 text-[11px] leading-tight min-h-0">
+                    <div class="text-yellow-300 font-bold">
+                        📱 【ロトム図鑑】相棒ポケモンのビンゴカードを選んでスタートロト！左上のアイコンからいつでも好きなポケモンに変えられるロト！
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 下段：プレイヤー別 相棒ポケモン・ビンゴカード領域 (67.5dvh 固定) -->
+        <section id="cardsGrid" class="h-[67.5dvh] grid grid-cols-3 gap-1.5 sm:gap-3 items-stretch overflow-hidden shrink-0"></section>
+    </main>
+
+    <!-- モーダル1：🔴 相棒ポケモン・ビンゴカード選択デッキ (全12匹) -->
+    <div id="oshiSelectModal" class="hidden fixed inset-0 z-50 bg-black/88 backdrop-blur-md flex items-center justify-center p-2 sm:p-5">
+        <div class="bg-slate-950 border-2 border-yellow-400 rounded-3xl max-w-5xl w-full max-h-[92dvh] flex flex-col shadow-[0_0_50px_rgba(250,204,21,0.45)] overflow-hidden">
+            <div class="p-3 sm:p-4 bg-gradient-to-r from-slate-900 via-red-950 to-slate-900 border-b border-yellow-400/50 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h3 class="font-manga text-base sm:text-2xl text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-amber-300 to-orange-400">
+                        🔴 キミにきめた！相棒ポケモン・カード編成！
+                    </h3>
+                    <p class="text-[11px] sm:text-xs text-slate-300">
+                        好きなポケモンをタッチすると、本物のなきごえ＆専用カラーデザインのビンゴカードに変身するぞ！
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center bg-black/60 p-1 rounded-xl border border-slate-700 gap-1">
+                        <button onclick="setPlayerCount(1)" id="modalCountBtn1" class="px-2.5 py-1 rounded-lg text-xs font-black transition">👑 1枚</button>
+                        <button onclick="setPlayerCount(2)" id="modalCountBtn2" class="px-2.5 py-1 rounded-lg text-xs font-black transition">⚔️ 2枚</button>
+                        <button onclick="setPlayerCount(3)" id="modalCountBtn3" class="px-2.5 py-1 rounded-lg text-xs font-black transition">👥 3枚</button>
+                    </div>
+                    <button onclick="closeOshiModal()" class="px-4 py-1.5 rounded-xl font-manga text-xs sm:text-sm bg-gradient-to-r from-yellow-300 to-amber-500 text-black border border-white shadow">
+                        ⚡ 決定して戻る
+                    </button>
+                </div>
+            </div>
+
+            <div class="px-3 sm:px-4 py-2 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                <div id="oshiPlayerTabs" class="flex items-center gap-1.5"></div>
+                <div class="flex items-center gap-1.5 flex-1 max-w-xs">
+                    <span class="text-xs font-bold text-yellow-300 shrink-0">カード名:</span>
+                    <input id="oshiModalNameInput" type="text" onchange="updateActiveModalPlayerName(this.value)" class="w-full bg-black/70 text-white font-manga text-xs sm:text-sm px-2.5 py-1 rounded-lg border border-yellow-400/60 focus:border-yellow-200 focus:outline-none" placeholder="例: たろうのピカチュウ">
+                </div>
+            </div>
+
+            <div id="oshiLeaderGrid" class="p-3 sm:p-4 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5 sm:gap-3"></div>
+        </div>
+    </div>
+
+    <!-- モーダル2：📖 ロトムのポケモン大図鑑 (全75匹) -->
+    <div id="pokedexModal" class="hidden fixed inset-0 z-50 bg-black/88 backdrop-blur-sm flex items-center justify-center p-2 sm:p-5">
+        <div class="bg-slate-950 border-2 border-yellow-400 rounded-2xl max-w-6xl w-full max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-3 sm:p-4 bg-gradient-to-r from-red-950 via-slate-900 to-red-950 border-b border-yellow-400/50 flex items-center justify-between gap-2">
+                <div>
+                    <h3 class="font-manga text-base sm:text-xl text-yellow-300">📖 ロトム図鑑・全75匹 キラカード＆なきごえ大図鑑</h3>
+                    <p class="text-[11px] sm:text-xs text-slate-300">ポケモンをタッチすると、キラカード拡大＆本物のなきごえ＋ロトム図鑑ボイスが聞けるロト！</p>
+                </div>
+                <button onclick="closePokedexModal()" class="px-4 py-1.5 rounded-xl font-manga text-xs sm:text-sm bg-red-600 hover:bg-red-500 text-white border border-yellow-300 shrink-0">
+                    ✖ 閉じる
+                </button>
+            </div>
+            <div id="fullHistoryGrid" class="p-2.5 sm:p-4 overflow-y-auto grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2"></div>
+        </div>
+    </div>
+
+    <!-- モーダル3：🔍 ポケモンキラカード拡大ショーケース -->
+    <div id="cardZoomModal" onclick="closeCardZoomModal(event)" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div onclick="event.stopPropagation()" class="relative max-w-sm w-full bg-gradient-to-br from-yellow-300 via-amber-400 to-red-600 p-1.5 rounded-3xl shadow-[0_0_60px_rgba(250,204,21,0.9)]">
+            <div class="bg-slate-950 rounded-[22px] overflow-hidden">
+                <div class="relative aspect-square w-full overflow-hidden holo-card-opened">
+                    <img id="zoomCardImg" src="../assets/cards/poke_01.webp" alt="ポケモンカード" class="w-full h-full object-cover">
+                    <div class="absolute top-2.5 left-2.5 bg-black/80 border border-yellow-300 text-yellow-300 font-manga text-sm px-2.5 py-0.5 rounded-lg shadow" id="zoomCardNum">B-1</div>
+                    <div class="absolute top-2.5 right-2.5 bg-gradient-to-r from-yellow-300 to-amber-500 text-black font-black text-xs px-2.5 py-0.5 rounded-full shadow" id="zoomCardAttr">でんき・UR</div>
+                    <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/85 to-transparent pt-10 pb-2 px-4">
+                        <div id="zoomCardMove" class="text-xs font-black text-cyan-300">⚡ 10まんボルト</div>
+                        <h3 id="zoomCardName" class="font-manga text-2xl text-white text-stroke-black">ピカチュウ</h3>
+                    </div>
+                </div>
+                <div class="p-4 space-y-3">
+                    <p id="zoomCardQuote" class="text-xs sm:text-sm font-bold text-yellow-200 bg-slate-900 border-l-4 border-yellow-400 p-2.5 rounded-r"></p>
+                    <div class="flex items-center gap-2">
+                        <button id="zoomReplayBtn" class="flex-1 py-2.5 rounded-xl font-manga text-xs sm:text-sm bg-gradient-to-r from-red-600 to-amber-500 text-white border border-yellow-200 shadow active:scale-95">
+                            🔊 なきごえ＆図鑑ボイス再生！
+                        </button>
+                        <button onclick="closeCardZoomModal()" class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600">
+                            閉じる
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- モーダル4：🎉 マスターボール級・BINGO達成カットイン -->
+    <div id="bingoCutinModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/88 backdrop-blur-md">
+        <div class="fixed inset-0 speed-lines-intense pointer-events-none"></div>
+        <div class="relative z-10 max-w-lg w-full bg-gradient-to-b from-yellow-300 via-amber-400 to-red-600 p-1.5 rounded-3xl shadow-[0_0_80px_rgba(250,204,21,1)]">
+            <div class="bg-slate-950 rounded-[22px] p-5 sm:p-6 text-center relative overflow-hidden">
+                <div class="relative z-10 flex flex-col items-center">
+                    <div class="inline-block bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-300 text-black font-black text-xs px-4 py-1 rounded-full uppercase mb-2 animate-bounce">
+                        🎊 マスターボール級・ミラクルBINGO達成！！ 🎊
+                    </div>
+                    <div class="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl p-1 bg-gradient-to-br from-yellow-200 via-amber-400 to-red-600 shadow-[0_0_30px_rgba(250,204,21,0.9)] my-1 overflow-hidden holo-card-opened relative">
+                        <img id="bingoModalPortrait" src="../assets/cards/leader_pikachu.webp" alt="相棒ポケモン" class="w-full h-full object-cover rounded-xl">
+                    </div>
+                    <h2 id="bingoModalTitle" class="font-manga text-xl sm:text-3xl text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-amber-300 to-orange-500 mt-2 mb-1">
+                        ピカチュウカードが ビンゴ達成！！
+                    </h2>
+                    <div id="bingoModalRankBadge" class="inline-block my-1 px-4 py-1 rounded-xl bg-red-600 border-2 border-yellow-300 text-yellow-200 font-manga text-sm sm:text-lg">
+                        🏆 ポケモンマスター級 ビンゴ王
+                    </div>
+                    <p id="bingoModalQuote" class="mt-2 text-xs sm:text-sm font-bold text-yellow-200 bg-slate-900/90 border border-yellow-400/40 rounded-xl p-3 w-full"></p>
+                    <button onclick="closeBingoModal()" class="mt-4 px-7 py-2.5 rounded-2xl font-manga text-sm sm:text-base text-black bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 border-2 border-white shadow-xl active:scale-95 transition">
+                        🔴 ぼうけん続行！さらなるビンゴをめざそう！
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- モーダル5：🔄 リセット確認 -->
+    <div id="resetConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div class="max-w-md w-full bg-slate-900 border-2 border-red-500 rounded-2xl p-5 text-center shadow-2xl">
+            <img src="../assets/items/pokeball_roulette.webp" alt="" class="w-16 h-16 mx-auto rounded-full mb-2 border-2 border-yellow-300">
+            <h3 class="font-manga text-lg sm:text-xl text-yellow-300 mb-1.5">あたらしいビンゴカードを配る？</h3>
+            <p class="text-xs sm:text-sm text-slate-300 mb-5">
+                これまでの抽選履歴をリセットして、選んだ相棒ポケモンのまま新しい25マスのキラカードを配り直すよ！
+            </p>
+            <div class="flex items-center justify-center gap-3">
+                <button onclick="closeResetModal()" class="flex-1 py-2 px-4 rounded-xl font-bold text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600">
+                    キャンセル
+                </button>
+                <button onclick="confirmResetGame()" class="flex-1 py-2 px-4 rounded-xl font-manga text-xs sm:text-sm bg-gradient-to-r from-red-600 to-amber-500 text-white border border-yellow-300 shadow-lg">
+                    🔴 新カードで開始！
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/data/pokemon_db.js"></script>
+    <script>
+        /* ==========================================================
+           1. 全12匹 相棒（推し）ポケモン・ビンゴカード定義
+        ========================================================== */
+        const OSHI_LEADERS = [
+            {
+                id: "pikachu", dexId: 25, charName: "ピカチュウ", defaultCardName: "ピカチュウカード",
+                badge: "⚡ 10まんボルト", sealIcon: "⚡", sealText: "ピカ",
+                portrait: "../assets/cards/leader_pikachu.webp",
+                headerBg: "from-amber-500 via-yellow-500 to-orange-600",
+                borderClass: "border-yellow-400",
+                cardBg: "from-slate-900 via-amber-950/40 to-slate-950",
+                openBorder: "border-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.9)]",
+                openRibbon: "from-amber-600/95 via-yellow-600/95 to-orange-700/95",
+                barColor: "from-yellow-200 via-amber-400 to-orange-500",
+                reachTitle: "⚡ 10まんボルトリーチ！",
+                selectQuote: "いっくぞ相棒ピカチュウ！10まんボルトでいちばんのりビンゴをゲットだぜ！！",
+                bingoQuote: "やったぁぁー！！ピカチュウの10まんボルト炸裂！さいきょうのビンゴ達成だぜ！！"
+            },
+            {
+                id: "charizard", dexId: 6, charName: "リザードン", defaultCardName: "リザードンカード",
+                badge: "🔥 ブラストバーン", sealIcon: "🔥", sealText: "火炎",
+                portrait: "../assets/cards/leader_charizard.webp",
+                headerBg: "from-red-600 via-orange-600 to-amber-600",
+                borderClass: "border-orange-500",
+                cardBg: "from-slate-900 via-red-950/45 to-slate-950",
+                openBorder: "border-orange-300 shadow-[0_0_12px_rgba(249,115,22,0.9)]",
+                openRibbon: "from-red-700/95 via-orange-700/95 to-amber-700/95",
+                barColor: "from-yellow-300 via-orange-500 to-red-600",
+                reachTitle: "🔥 かえんリーチ！",
+                selectQuote: "いけっリザードン！しゃくねつのブラストバーンでしょうりをつかみとるぜ！！",
+                bingoQuote: "うおおぉっ！リザードンのほのおがもえあがる！かんぜんしょうりビンゴだぜ！！"
+            },
+            {
+                id: "eevee", dexId: 133, charName: "イーブイ", defaultCardName: "イーブイカード",
+                badge: "🎀 しんかのきせき", sealIcon: "🎀", sealText: "ブイ",
+                portrait: "../assets/cards/leader_eevee.webp",
+                headerBg: "from-amber-600 via-orange-500 to-pink-500",
+                borderClass: "border-amber-300",
+                cardBg: "from-slate-900 via-amber-950/35 to-slate-950",
+                openBorder: "border-pink-200 shadow-[0_0_12px_rgba(244,114,182,0.85)]",
+                openRibbon: "from-amber-700/95 via-orange-600/95 to-pink-600/95",
+                barColor: "from-amber-200 via-orange-400 to-pink-500",
+                reachTitle: "🎀 イーブイリーチ！",
+                selectQuote: "イーブイのカードだね！むげんのしんかパワーでキラキラビンゴをめざすよ！！",
+                bingoQuote: "やったぁー！！イーブイといっしょにハッピービンゴかんぜんたっせいだよ！！"
+            },
+            {
+                id: "mewtwo", dexId: 150, charName: "ミュウツー", defaultCardName: "ミュウツーカード",
+                badge: "🔮 サイコブレイク", sealIcon: "🔮", sealText: "超能",
+                portrait: "../assets/cards/leader_mewtwo.webp",
+                headerBg: "from-purple-800 via-fuchsia-700 to-indigo-800",
+                borderClass: "border-purple-400",
+                cardBg: "from-slate-950 via-purple-950/45 to-black",
+                openBorder: "border-fuchsia-300 shadow-[0_0_12px_rgba(192,132,252,0.9)]",
+                openRibbon: "from-purple-800/95 via-fuchsia-800/95 to-indigo-900/95",
+                barColor: "from-fuchsia-300 via-purple-500 to-indigo-600",
+                reachTitle: "🔮 サイコリーチ！",
+                selectQuote: "わたしはミュウツー…さいきょうのサイコパワーでしょうりのみらいをみせてやろう。",
+                bingoQuote: "みごとだ…これぞさいきょうのちからがみちびきだしたかんぺきなるビンゴだ！"
+            },
+            {
+                id: "mew", dexId: 151, charName: "ミュウ", defaultCardName: "ミュウカード",
+                badge: "✨ ゆびをふる", sealIcon: "✨", sealText: "幻星",
+                portrait: "../assets/cards/leader_mew.webp",
+                headerBg: "from-pink-500 via-rose-400 to-purple-500",
+                borderClass: "border-pink-300",
+                cardBg: "from-slate-900 via-pink-950/40 to-slate-950",
+                openBorder: "border-pink-200 shadow-[0_0_12px_rgba(249,168,212,0.9)]",
+                openRibbon: "from-pink-600/95 via-rose-500/95 to-purple-600/95",
+                barColor: "from-pink-200 via-rose-400 to-purple-500",
+                reachTitle: "✨ ミラクルリーチ！",
+                selectQuote: "わぁっ、まぼろしのミュウのカードだよ！ゆびをふるでミラクルをおこしちゃおう！",
+                bingoQuote: "すごいすごーい！！ミュウのミラクルパワーでキラキラビンゴだいせいこうだね！！"
+            },
+            {
+                id: "lucario", dexId: 448, charName: "ルカリオ", defaultCardName: "ルカリオカード",
+                badge: "🌀 はどうだん", sealIcon: "🌀", sealText: "波導",
+                portrait: "../assets/cards/leader_lucario.webp",
+                headerBg: "from-sky-700 via-blue-700 to-cyan-600",
+                borderClass: "border-cyan-400",
+                cardBg: "from-slate-900 via-sky-950/45 to-slate-950",
+                openBorder: "border-cyan-200 shadow-[0_0_12px_rgba(56,189,248,0.9)]",
+                openRibbon: "from-sky-700/95 via-blue-800/95 to-cyan-700/95",
+                barColor: "from-cyan-300 via-sky-500 to-blue-700",
+                reachTitle: "🌀 はどうリーチ！",
+                selectQuote: "はどうはわれにあり！ルカリオとともにしょうりのはどうをつかみとるぞ！",
+                bingoQuote: "みごとなはどうのきょうめいだ！はどうだんビンゴ、かんぜんたっせいだ！！"
+            },
+            {
+                id: "greninja", dexId: 658, charName: "ゲッコウガ", defaultCardName: "ゲッコウガカード",
+                badge: "🥷 みずしゅりけん", sealIcon: "💧", sealText: "水手",
+                portrait: "../assets/cards/leader_greninja.webp",
+                headerBg: "from-blue-800 via-indigo-700 to-cyan-700",
+                borderClass: "border-blue-400",
+                cardBg: "from-slate-950 via-blue-950/45 to-black",
+                openBorder: "border-sky-300 shadow-[0_0_12px_rgba(59,130,246,0.9)]",
+                openRibbon: "from-blue-800/95 via-indigo-900/95 to-cyan-800/95",
+                barColor: "from-cyan-300 via-blue-500 to-indigo-700",
+                reachTitle: "🥷 みずしゅりけんリーチ！",
+                selectQuote: "いけっゲッコウガ！キズナげんしょうのみずしゅりけんでさいそくビンゴをきめるぜ！",
+                bingoQuote: "しゅばっ！めにもとまらぬちょうスピード！みずしゅりけんビンゴたっせいだぜ！！"
+            },
+            {
+                id: "rayquaza", dexId: 384, charName: "レックウザ", defaultCardName: "レックウザカード",
+                badge: "☄️ ガリョウテンセイ", sealIcon: "🐉", sealText: "天空",
+                portrait: "../assets/cards/leader_rayquaza.webp",
+                headerBg: "from-emerald-700 via-teal-700 to-amber-600",
+                borderClass: "border-emerald-400",
+                cardBg: "from-slate-950 via-emerald-950/45 to-black",
+                openBorder: "border-emerald-200 shadow-[0_0_12px_rgba(16,185,129,0.9)]",
+                openRibbon: "from-emerald-800/95 via-teal-800/95 to-amber-700/95",
+                barColor: "from-yellow-300 via-emerald-400 to-teal-600",
+                reachTitle: "☄️ てんくうリーチ！",
+                selectQuote: "てんくうのはしゃレックウザこうりん！ガリョウテンセイでちょうてんへかけあがるぞ！！",
+                bingoQuote: "うおおぉっ！おおぞらをつらぬくレックウザのちょうぜつビンゴたっせいだァァ！！"
+            },
+            {
+                id: "sylveon", dexId: 700, charName: "ニンフィア", defaultCardName: "ニンフィアカード",
+                badge: "💖 ムーンフォース", sealIcon: "💖", sealText: "妖精",
+                portrait: "../assets/cards/leader_sylveon.webp",
+                headerBg: "from-pink-500 via-fuchsia-500 to-sky-500",
+                borderClass: "border-pink-300",
+                cardBg: "from-slate-900 via-pink-950/40 to-slate-950",
+                openBorder: "border-pink-200 shadow-[0_0_12px_rgba(244,114,182,0.9)]",
+                openRibbon: "from-pink-600/95 via-fuchsia-600/95 to-sky-600/95",
+                barColor: "from-sky-300 via-pink-400 to-fuchsia-500",
+                reachTitle: "💖 フェアリーリーチ！",
+                selectQuote: "ニンフィアのカードね！リボンのフェアリーパワーですてきなミラクルをおこすわよ！",
+                bingoQuote: "きらきらだいせいこう〜！！ニンフィアのムーンフォースでさいこうにかわいいビンゴよ！！"
+            },
+            {
+                id: "gengar", dexId: 94, charName: "ゲンガー", defaultCardName: "ゲンガーカード",
+                badge: "👻 シャドーボール", sealIcon: "👻", sealText: "影玉",
+                portrait: "../assets/cards/leader_gengar.webp",
+                headerBg: "from-violet-800 via-purple-800 to-rose-800",
+                borderClass: "border-violet-400",
+                cardBg: "from-slate-950 via-violet-950/45 to-black",
+                openBorder: "border-violet-200 shadow-[0_0_12px_rgba(167,139,250,0.9)]",
+                openRibbon: "from-violet-800/95 via-purple-900/95 to-rose-900/95",
+                barColor: "from-rose-400 via-violet-500 to-purple-800",
+                reachTitle: "👻 ゴーストリーチ！",
+                selectQuote: "ケケケッ！ゲンガーのカードとはいいセンスだねぇ！シャドーボールでおどろかせちゃうぞ！",
+                bingoQuote: "イッヒッヒ！！びっくりだいぎゃくてん！ゲンガーのゴーストビンゴだいせいこうだぜ！！"
+            },
+            {
+                id: "mimikyu", dexId: 778, charName: "ミミッキュ", defaultCardName: "ミミッキュカード",
+                badge: "🧸 ぽかぼかタイム", sealIcon: "🧸", sealText: "親友",
+                portrait: "../assets/cards/leader_mimikyu.webp",
+                headerBg: "from-amber-700 via-purple-700 to-slate-800",
+                borderClass: "border-amber-300",
+                cardBg: "from-slate-950 via-purple-950/35 to-black",
+                openBorder: "border-amber-200 shadow-[0_0_12px_rgba(251,191,36,0.9)]",
+                openRibbon: "from-amber-700/95 via-purple-800/95 to-slate-900/95",
+                barColor: "from-yellow-200 via-amber-400 to-purple-600",
+                reachTitle: "🧸 なかよしリーチ！",
+                selectQuote: "ミミッキュのカードをえらんでくれてありがとう！なかよしパワーでいっしょにがんばるね！",
+                bingoQuote: "やったぁ…！ミミッキュもおおよろこびだよ！さいこうのフレンドビンゴたっせいだね！！"
+            },
+            {
+                id: "piplup", dexId: 393, charName: "ポッチャマ", defaultCardName: "ポッチャマカード",
+                badge: "🐧 バブルこうせん", sealIcon: "🫧", sealText: "泡光",
+                portrait: "../assets/cards/leader_piplup.webp",
+                headerBg: "from-sky-500 via-cyan-500 to-blue-600",
+                borderClass: "border-sky-300",
+                cardBg: "from-slate-900 via-sky-950/40 to-slate-950",
+                openBorder: "border-sky-200 shadow-[0_0_12px_rgba(125,211,252,0.9)]",
+                openRibbon: "from-sky-600/95 via-cyan-600/95 to-blue-700/95",
+                barColor: "from-cyan-200 via-sky-400 to-blue-600",
+                reachTitle: "🫧 バブルリーチ！",
+                selectQuote: "むねをはっていっくよー！ポッチャマのバブルこうせんでいちばんのりをめざそうね！！",
+                bingoQuote: "やったねポッチャマ！！キラキラのみずしぶきでパーフェクトビンゴたっせいだよ！！"
+            }
+        ];
+
+        const POKEMON_POOL = (window.POKEMON_MAIN_75 || []).map(p => ({
+            ...p,
+            cardName: p.name,
+            img: `../${p.cardImg}`,
+            cryUrl: `../${p.crySrc}`
+        }));
+
+        const BINGO_TITLES = [
+            "👑 初代ポケモンマスター王",
+            "⚡ チャンピオンリーグ覇者",
+            "🌟 四天王トップランカー"
+        ];
+
+        const BALL_SPIN_STEPS = [
+            { img: "../assets/items/pokeball_roulette.webp", label: "モンスターボールを なげたぞ！" },
+            { img: "../assets/items/three_balls.webp",       label: "ぐらっ…！ ボールが ゆれている…！" },
+            { img: "../assets/items/pokeball_roulette.webp", label: "ぐらぐらっ…！ あとすこしだ…！" },
+            { img: "../assets/items/masterball.webp",        label: "カチッ✨ ポケモン ゲットだぜ！！" }
+        ];
+
+        /* ==========================================================
+           2. ゲーム状態管理 & ローカル保存
+        ========================================================== */
+        const STORAGE_KEY = "pokemon_bingo_prefs_v1";
+        const state = {
+            playerCount: 3,
+            voiceMode: "full",
+            audioManifest: null,
+            drawnSet: new Set(),
+            drawnHistory: [],
+            remainingIds: [],
+            latestDrawnId: null,
+            isSpinning: false,
+            spinIntervalId: null,
+            activeOshiTab: 0,
+            players: [],
+            bingoWinnerOrder: []
+        };
+
+        function getLeaderById(id) {
+            return OSHI_LEADERS.find(l => l.id === id) || OSHI_LEADERS[0];
+        }
+
+        function loadSavedPrefs() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch (_) { return null; }
+        }
+
+        function savePrefs() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    playerCount: state.playerCount,
+                    slots: state.players.map(p => ({ name: p.name, leaderId: p.leader.id }))
+                }));
+            } catch (_) {}
+        }
+
+        /* ==========================================================
+           3. 音声再生キューエンジン（本物の鳴き声＋アニメ実況＋ロトム図鑑）
+        ========================================================== */
+        const voicePlayer = document.getElementById('animeVoicePlayer');
+        let tabletUnlocked = false;
+        let voiceQueue = [];
+        let isPlayingQueue = false;
+        let currentEndTimer = null;
+        let currentLabelTimer = null;
+
+        async function loadAudioManifest() {
+            try {
+                const res = await fetch('../assets/audio/manifest.json?v=' + Date.now());
+                if (res.ok) state.audioManifest = await res.json();
+            } catch (_) {}
+        }
+
+        function unlockTabletAudioOnce() {
+            if (tabletUnlocked) return;
+            tabletUnlocked = true;
+            getAudioContext();
+            if (voicePlayer && !voicePlayer.src) {
+                voicePlayer.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+                voicePlayer.play().then(() => voicePlayer.pause()).catch(() => {});
+            }
+        }
+        window.addEventListener('pointerdown', unlockTabletAudioOnce, { once: true, passive: true });
+
+        function setSpeakingBadge(text) {
+            const box = document.getElementById('speakingIndicator');
+            const lbl = document.getElementById('speakingLabel');
+            if (!text) {
+                box.classList.add('hidden');
+                box.classList.remove('inline-flex');
+            } else {
+                lbl.textContent = text;
+                box.classList.remove('hidden');
+                box.classList.add('inline-flex');
+            }
+        }
+
+        function stopAllVoicePlayback() {
+            voiceQueue = [];
+            isPlayingQueue = false;
+            if (currentEndTimer) { clearTimeout(currentEndTimer); currentEndTimer = null; }
+            if (currentLabelTimer) { clearTimeout(currentLabelTimer); currentLabelTimer = null; }
+            try { voicePlayer.pause(); } catch (_) {}
+            if ('speechSynthesis' in window) {
+                try { window.speechSynthesis.cancel(); } catch (_) {}
+            }
+            setSpeakingBadge(null);
+        }
+
+        function enqueueVoiceClips(clips, interrupt = true) {
+            if (state.voiceMode === 'mute') return;
+            if (interrupt) stopAllVoicePlayback();
+            voiceQueue.push(...clips);
+            if (!isPlayingQueue) playNextInQueue();
+        }
+
+        function playNextInQueue() {
+            if (state.voiceMode === 'mute' || voiceQueue.length === 0) {
+                isPlayingQueue = false;
+                setSpeakingBadge(null);
+                return;
+            }
+            isPlayingQueue = true;
+            const clip = voiceQueue.shift();
+            setSpeakingBadge(clip.label || '🔊 ボイス再生中');
+
+            if (clip.splitLabelAt && clip.secondLabel) {
+                const delayMs = Math.max(200, (clip.splitLabelAt - (clip.startSec || 0)) * 1000);
+                currentLabelTimer = setTimeout(() => setSpeakingBadge(clip.secondLabel), delayMs);
+            }
+
+            const advance = () => {
+                if (currentEndTimer) { clearTimeout(currentEndTimer); currentEndTimer = null; }
+                if (currentLabelTimer) { clearTimeout(currentLabelTimer); currentLabelTimer = null; }
+                playNextInQueue();
+            };
+
+            const fallbackToCryAndSpeech = () => {
+                if (clip.cryUrl) {
+                    voicePlayer.onended = () => speakWebSpeech(clip.fallbackText, advance);
+                    voicePlayer.onerror = () => speakWebSpeech(clip.fallbackText, advance);
+                    voicePlayer.src = clip.cryUrl;
+                    voicePlayer.play().catch(() => speakWebSpeech(clip.fallbackText, advance));
+                } else {
+                    speakWebSpeech(clip.fallbackText, advance);
+                }
+            };
+
+            if (!clip.src) {
+                fallbackToCryAndSpeech();
+                return;
+            }
+
+            voicePlayer.onended = advance;
+            voicePlayer.onerror = fallbackToCryAndSpeech;
+
+            const startPlayback = () => {
+                const s = clip.startSec || 0;
+                if (s > 0.05) {
+                    try { voicePlayer.currentTime = s; } catch (_) {}
+                }
+                if (clip.endSec && clip.endSec > s) {
+                    currentEndTimer = setTimeout(() => {
+                        try { voicePlayer.pause(); } catch (_) {}
+                        advance();
+                    }, (clip.endSec - s) * 1000);
+                }
+                voicePlayer.play().catch(fallbackToCryAndSpeech);
+            };
+
+            voicePlayer.src = clip.src;
+            if ((clip.startSec || 0) > 0.05) {
+                voicePlayer.addEventListener('loadedmetadata', startPlayback, { once: true });
+                voicePlayer.load();
+            } else {
+                startPlayback();
+            }
+        }
+
+        function speakWebSpeech(text, onDone) {
+            if (!text || !('speechSynthesis' in window)) {
+                setSpeakingBadge(null);
+                if (onDone) onDone();
+                return;
+            }
+            try {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = 'ja-JP';
+                utter.rate = 1.12;
+                utter.pitch = 1.1;
+                const finish = () => {
+                    setSpeakingBadge(null);
+                    if (onDone) onDone();
+                };
+                utter.onend = finish;
+                utter.onerror = finish;
+                window.speechSynthesis.speak(utter);
+            } catch (_) {
+                setSpeakingBadge(null);
+                if (onDone) onDone();
+            }
+        }
+
+        function resolveManifestSrc(relSrc, fallbackRel) {
+            return relSrc ? `../${relSrc}` : fallbackRel;
+        }
+
+        function playSysVoice(key, label, fallbackText, cryUrl = null) {
+            const src = resolveManifestSrc(state.audioManifest?.sys?.[key]?.src, `../assets/audio/sys/${key}.mp3`);
+            enqueueVoiceClips([{ src, label, fallbackText, cryUrl }], true);
+        }
+
+        function playLeaderSelectVoice(leader) {
+            const src = resolveManifestSrc(state.audioManifest?.leaders?.[leader.id]?.select, `../assets/audio/leaders/${leader.id}_select.mp3`);
+            enqueueVoiceClips([{
+                src,
+                label: `🔴 ${leader.charName}`,
+                fallbackText: leader.selectQuote,
+                cryUrl: `../assets/audio/cries/dex_${leader.dexId}.mp3`
+            }], true);
+        }
+
+        function playCharacterQuoteOnly(item) {
+            const m = state.audioManifest?.summon?.[String(item.id)];
+            const src = resolveManifestSrc(m?.src, `../assets/audio/summon/${String(item.id).padStart(2, '0')}.mp3`);
+            const startSec = m?.splitSec || 0;
+            enqueueVoiceClips([{
+                src,
+                startSec,
+                label: `🔊 ${item.name} 図鑑`,
+                fallbackText: `${item.name}！ ${item.spokenQuote}`,
+                cryUrl: item.cryUrl
+            }], true);
+        }
+
+        function playSummonSequence(item, hitPlayers, reachUpPlayers, bingoUpPlayers) {
+            if (state.voiceMode === 'mute') return;
+            const m = state.audioManifest?.summon?.[String(item.id)];
+            const summonSrc = resolveManifestSrc(m?.src, `../assets/audio/summon/${String(item.id).padStart(2, '0')}.mp3`);
+            const splitSec = m?.splitSec || null;
+            const quickEndSec = m?.quickEndSec || (splitSec ? splitSec + 1.4 : null);
+            const colKana = ["ビー", "アイ", "エヌ", "ジー", "オー"][Math.floor((item.id - 1) / 15)];
+
+            const queue = [];
+            if (state.voiceMode === 'full') {
+                queue.push({
+                    src: summonSrc,
+                    startSec: 0,
+                    endSec: null,
+                    label: '🎙️ トレーナー実況中！',
+                    splitLabelAt: splitSec || 3.2,
+                    secondLabel: `🔊 ${item.name} ＆ ロトム図鑑！`,
+                    fallbackText: `いけっモンスターボール！ ${colKana}の${item.id}ばん、${item.name}だぜ！ ${item.spokenQuote}`,
+                    cryUrl: item.cryUrl
+                });
+            } else {
+                queue.push({
+                    src: summonSrc,
+                    startSec: 0,
+                    endSec: quickEndSec,
+                    label: `⚡ ${item.name} 登場！`,
+                    fallbackText: `${colKana}の${item.id}ばん、${item.name}だぜ！`,
+                    cryUrl: item.cryUrl
+                });
+            }
+
+            if (bingoUpPlayers.length > 0) {
+                const winner = bingoUpPlayers[0];
+                queue.push({
+                    src: resolveManifestSrc(state.audioManifest?.sys?.bingo?.src, '../assets/audio/sys/bingo.mp3'),
+                    label: '🎊 ビンゴ達成！！',
+                    fallbackText: 'やったぁぁー！ポケモンマスター級、ビンゴ達成、ゲットだぜ！'
+                });
+                queue.push({
+                    src: resolveManifestSrc(state.audioManifest?.leaders?.[winner.leader.id]?.bingo, `../assets/audio/leaders/${winner.leader.id}_bingo.mp3`),
+                    label: `🏆 ${winner.leader.charName}`,
+                    fallbackText: winner.leader.bingoQuote,
+                    cryUrl: `../assets/audio/cries/dex_${winner.leader.dexId}.mp3`
+                });
+            } else if (reachUpPlayers.length > 0) {
+                queue.push({
+                    src: resolveManifestSrc(state.audioManifest?.sys?.reach?.src, '../assets/audio/sys/reach.mp3'),
+                    label: '⚡ リーチ突入！',
+                    fallbackText: 'きたきたぁ！あと1ぴきでポケモンビンゴ達成だぜ！'
+                });
+            } else if (state.voiceMode === 'full' && hitPlayers.length > 0) {
+                const hitKey = hitPlayers.length >= 3 ? 'triple_hit' : (hitPlayers.length === 2 ? 'double_hit' : 'hit');
+                queue.push({
+                    src: resolveManifestSrc(state.audioManifest?.sys?.[hitKey]?.src, `../assets/audio/sys/${hitKey}.mp3`),
+                    label: '🔴 ポケモンゲット！',
+                    fallbackText: 'やったぜ！カードのポケモン、ゲットだぜ！'
+                });
+            }
+
+            enqueueVoiceClips(queue, true);
+        }
+
+        function cycleVoiceMode() {
+            unlockTabletAudioOnce();
+            const order = ['full', 'quick', 'mute'];
+            state.voiceMode = order[(order.indexOf(state.voiceMode) + 1) % order.length];
+            const iconEl = document.getElementById('voiceModeIcon');
+            const textEl = document.getElementById('voiceModeText');
+            const btnEl = document.getElementById('voiceModeBtn');
+
+            if (state.voiceMode === 'full') {
+                iconEl.textContent = "🔥";
+                textEl.textContent = "声:フル実況";
+                btnEl.className = "px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-amber-900/90 hover:bg-amber-800 border border-amber-400 text-amber-100 flex items-center gap-1 shadow active:scale-95 transition";
+                playSysVoice('test', '🎙️ 実況オン！', 'フル実況モードだぜ！ポケモンゲットだぜ！', '../assets/audio/cries/dex_25.mp3');
+            } else if (state.voiceMode === 'quick') {
+                iconEl.textContent = "⚡";
+                textEl.textContent = "声:サクサク";
+                btnEl.className = "px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-emerald-900/90 hover:bg-emerald-800 border border-emerald-400 text-emerald-100 flex items-center gap-1 shadow active:scale-95 transition";
+                stopAllVoicePlayback();
+            } else {
+                iconEl.textContent = "🔇";
+                textEl.textContent = "声:ミュート";
+                btnEl.className = "px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-slate-800 hover:bg-slate-700 border border-slate-500 text-slate-300 flex items-center gap-1 shadow active:scale-95 transition";
+                stopAllVoicePlayback();
+            }
+            playBallWobbleSound(1.1);
+        }
+
+        function testVoiceEngine() {
+            unlockTabletAudioOnce();
+            if (state.voiceMode === 'mute') {
+                state.voiceMode = 'full';
+                document.getElementById('voiceModeIcon').textContent = "🔥";
+                document.getElementById('voiceModeText').textContent = "声:フル実況";
+            }
+            playCaptureChime(false);
+            playSysVoice('test', '⚡ ピカチュウ＆サトシ風', 'ピカチュウ、じゅんびバッチリだぜ！ポケモンビンゴ、ゲットだぜ！', '../assets/audio/cries/dex_25.mp3');
+            addCommentary("🔊 【音声チェック】ピカチュウの鳴き声＆実況ボイスの再生を確認したロト！", "text-cyan-300 font-bold");
+        }
+
+        function replayCurrentVoice() {
+            unlockTabletAudioOnce();
+            if (!state.latestDrawnId) {
+                testVoiceEngine();
+                return;
+            }
+            const item = POKEMON_POOL.find(x => x.id === state.latestDrawnId);
+            if (item) playSummonSequence(item, [], [], []);
+        }
+
+        /* ==========================================================
+           4. Web Audio API ポケモン効果音シンセサイザー
+        ========================================================== */
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (AC) audioCtx = new AC();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            return audioCtx;
+        }
+
+        function playBallWobbleSound(pitch = 1) {
+            if (state.voiceMode === 'mute') return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(520 * pitch, now);
+            osc.frequency.exponentialRampToValueAtTime(880 * pitch, now + 0.06);
+            osc.frequency.exponentialRampToValueAtTime(460 * pitch, now + 0.11);
+            gain.gain.setValueAtTime(0.24, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.12);
+        }
+
+        function playBallOpenPopSound() {
+            if (state.voiceMode === 'mute') return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(260, now);
+            osc.frequency.exponentialRampToValueAtTime(1120, now + 0.18);
+            gain.gain.setValueAtTime(0.36, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.23);
+        }
+
+        function playCaptureChime(isReach = false) {
+            if (state.voiceMode === 'mute') return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const freqs = isReach ? [523.25, 659.25, 783.99, 1046.5] : [587.33, 783.99, 987.77];
+            freqs.forEach((f, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(f, now + idx * 0.065);
+                gain.gain.setValueAtTime(0.22, now + idx * 0.065);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.065 + 0.22);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + idx * 0.065);
+                osc.stop(now + idx * 0.065 + 0.24);
+            });
+        }
+
+        function playBingoFanfare() {
+            if (state.voiceMode === 'mute') return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const notes = [
+                { freq: 523.25, delay: 0.0, dur: 0.13 },
+                { freq: 523.25, delay: 0.13, dur: 0.13 },
+                { freq: 523.25, delay: 0.26, dur: 0.13 },
+                { freq: 523.25, delay: 0.40, dur: 0.28 },
+                { freq: 415.30, delay: 0.70, dur: 0.24 },
+                { freq: 466.16, delay: 0.96, dur: 0.24 },
+                { freq: 523.25, delay: 1.22, dur: 0.18 },
+                { freq: 466.16, delay: 1.44, dur: 0.12 },
+                { freq: 523.25, delay: 1.58, dur: 0.65 }
+            ];
+            notes.forEach(n => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(n.freq, now + n.delay);
+                gain.gain.setValueAtTime(0.28, now + n.delay);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + n.delay + n.dur);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now + n.delay);
+                osc.stop(now + n.delay + n.dur + 0.02);
+            });
+        }
+
+        /* ==========================================================
+           5. ビンゴカード生成＆オープン判定エンジン
+        ========================================================== */
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function generateBingoGrid() {
+            const cols = [];
+            for (let colIdx = 0; colIdx < 5; colIdx++) {
+                const min = colIdx * 15 + 1;
+                const pool = [];
+                for (let n = min; n < min + 15; n++) pool.push(n);
+                cols.push(shuffleArray(pool).slice(0, 5));
+            }
+            const grid = [];
+            for (let r = 0; r < 5; r++) {
+                const row = [];
+                for (let c = 0; c < 5; c++) {
+                    if (r === 2 && c === 2) {
+                        row.push({
+                            isFree: true,
+                            id: 0,
+                            cardName: "FREE",
+                            name: "マスターボール (FREE)",
+                            move: "相棒パワー常時解放",
+                            img: "../assets/cards/free.webp",
+                            opened: true,
+                            inBingoLine: false
+                        });
+                    } else {
+                        const numId = Number(cols[c][r]);
+                        const itemData = POKEMON_POOL.find(item => item.id === numId);
+                        row.push({
+                            isFree: false,
+                            id: numId,
+                            cardName: itemData.cardName,
+                            name: itemData.name,
+                            move: itemData.move,
+                            rarity: itemData.rarity,
+                            img: itemData.img,
+                            opened: false,
+                            inBingoLine: false
+                        });
+                    }
+                }
+                grid.push(row);
+            }
+            return grid;
+        }
+
+        function getActivePlayers() {
+            return state.players.slice(0, state.playerCount);
+        }
+
+        function syncAndEvaluatePlayer(player) {
+            const grid = player.grid;
+            let hitLatest = false;
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
+                    const cell = grid[r][c];
+                    const numId = Number(cell.id);
+                    cell.opened = Boolean(cell.isFree || state.drawnSet.has(numId));
+                    cell.inBingoLine = false;
+                    if (!cell.isFree && numId === state.latestDrawnId) hitLatest = true;
+                }
+            }
+
+            const lines = [];
+            for (let r = 0; r < 5; r++) lines.push([[r,0],[r,1],[r,2],[r,3],[r,4]]);
+            for (let c = 0; c < 5; c++) lines.push([[0,c],[1,c],[2,c],[3,c],[4,c]]);
+            lines.push([[0,0],[1,1],[2,2],[3,3],[4,4]]);
+            lines.push([[0,4],[1,3],[2,2],[3,1],[4,0]]);
+
+            let bingoCount = 0;
+            let reachCount = 0;
+            lines.forEach(line => {
+                const openedCells = line.filter(([r, c]) => grid[r][c].opened);
+                if (openedCells.length === 5) {
+                    bingoCount++;
+                    line.forEach(([r, c]) => { grid[r][c].inBingoLine = true; });
+                } else if (openedCells.length === 4) {
+                    reachCount++;
+                }
+            });
+
+            let openedCount = 0;
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) if (grid[r][c].opened) openedCount++;
+            }
+
+            const prevBingo = player.bingoCount;
+            const prevReach = player.reachCount;
+            player.bingoCount = bingoCount;
+            player.reachCount = reachCount;
+            player.openedCount = openedCount;
+
+            if (bingoCount > 0 && player.rankOrder === null) {
+                state.bingoWinnerOrder.push(player.id);
+                player.rankOrder = state.bingoWinnerOrder.length;
+            }
+
+            return {
+                hitLatest,
+                bingoIncreased: bingoCount > prevBingo,
+                reachIncreased: reachCount > prevReach
+            };
+        }
+
+        function initGame(preserveSetup = true) {
+            if (state.spinIntervalId) {
+                clearInterval(state.spinIntervalId);
+                state.spinIntervalId = null;
+            }
+            const saved = loadSavedPrefs();
+            if (!preserveSetup) {
+                if (saved?.playerCount && [1, 2, 3].includes(saved.playerCount)) {
+                    state.playerCount = saved.playerCount;
+                } else {
+                    state.playerCount = window.innerWidth < 900 ? 2 : 3;
+                }
+            }
+            const defaultLeaderIds = ["pikachu", "charizard", "eevee"];
+
+            state.drawnSet = new Set();
+            state.drawnHistory = [];
+            state.remainingIds = Array.from({ length: 75 }, (_, i) => i + 1);
+            state.latestDrawnId = null;
+            state.isSpinning = false;
+            state.bingoWinnerOrder = [];
+
+            if (preserveSetup && state.players.length === 3) {
+                state.players.forEach(p => {
+                    p.grid = generateBingoGrid();
+                    p.bingoCount = 0;
+                    p.reachCount = 0;
+                    p.openedCount = 1;
+                    p.rankOrder = null;
+                });
+            } else {
+                state.players = [0, 1, 2].map(idx => {
+                    const savedSlot = saved?.slots?.[idx];
+                    const leader = getLeaderById(savedSlot?.leaderId || defaultLeaderIds[idx]);
+                    return {
+                        id: idx,
+                        name: savedSlot?.name || leader.defaultCardName,
+                        leader,
+                        grid: generateBingoGrid(),
+                        bingoCount: 0,
+                        reachCount: 0,
+                        openedCount: 1,
+                        rankOrder: null
+                    };
+                });
+            }
+
+            state.players.forEach(p => syncAndEvaluatePlayer(p));
+            updatePlayerCountButtonUI();
+            updateTopLotteryDisplay(null);
+            renderAllPlayerCards();
+            renderMiniScoreboard();
+            renderHorizontalHistory();
+            renderFullHistoryModalGrid();
+        }
+
+        /* ==========================================================
+           6. プレイ枚数切替＆相棒ポケモンカード変更
+        ========================================================== */
+        function updatePlayerCountButtonUI() {
+            const iconMap = { 1: "👑", 2: "⚔️", 3: "👥" };
+            const textMap = { 1: "1枚特大", 2: "2枚対戦", 3: "3枚対戦" };
+            document.getElementById('playerCountIcon').textContent = iconMap[state.playerCount];
+            document.getElementById('playerCountText').textContent = textMap[state.playerCount];
+
+            const grid = document.getElementById('cardsGrid');
+            if (state.playerCount === 1) {
+                grid.className = "h-[67.5dvh] max-w-xl mx-auto w-full grid grid-cols-1 gap-2 items-stretch overflow-hidden shrink-0";
+            } else if (state.playerCount === 2) {
+                grid.className = "h-[67.5dvh] max-w-5xl mx-auto w-full grid grid-cols-2 gap-2 sm:gap-4 items-stretch overflow-hidden shrink-0";
+            } else {
+                grid.className = "h-[67.5dvh] w-full grid grid-cols-3 gap-1.5 sm:gap-3 items-stretch overflow-hidden shrink-0";
+            }
+        }
+
+        function setPlayerCount(count) {
+            unlockTabletAudioOnce();
+            playBallWobbleSound(1.1);
+            state.playerCount = count;
+            if (state.activeOshiTab >= count) state.activeOshiTab = 0;
+            savePrefs();
+            updatePlayerCountButtonUI();
+            renderAllPlayerCards();
+            renderMiniScoreboard();
+            if (!document.getElementById('oshiSelectModal').classList.contains('hidden')) renderOshiModalContent();
+        }
+
+        function cyclePlayerCount() {
+            const next = state.playerCount === 3 ? 2 : (state.playerCount === 2 ? 1 : 3);
+            setPlayerCount(next);
+        }
+
+        function openOshiModal(playerIdx = 0) {
+            unlockTabletAudioOnce();
+            playBallWobbleSound(1.05);
+            state.activeOshiTab = Math.min(playerIdx, state.playerCount - 1);
+            renderOshiModalContent();
+            document.getElementById('oshiSelectModal').classList.remove('hidden');
+        }
+
+        function closeOshiModal() {
+            playBallWobbleSound(1.15);
+            document.getElementById('oshiSelectModal').classList.add('hidden');
+        }
+
+        function selectOshiTab(idx) {
+            playBallWobbleSound(1.0);
+            state.activeOshiTab = idx;
+            renderOshiModalContent();
+        }
+
+        function chooseOshiLeaderForSlot(leaderId) {
+            unlockTabletAudioOnce();
+            const player = state.players[state.activeOshiTab];
+            const prevDefault = player.leader.defaultCardName;
+            const newLeader = getLeaderById(leaderId);
+            player.leader = newLeader;
+            if (!player.name || player.name === prevDefault || OSHI_LEADERS.some(l => l.defaultCardName === player.name)) {
+                player.name = newLeader.defaultCardName;
+            }
+            savePrefs();
+            playCaptureChime(false);
+            playLeaderSelectVoice(newLeader);
+
+            renderOshiModalContent();
+            renderAllPlayerCards();
+            renderMiniScoreboard();
+            addCommentary(`🔴 ${state.activeOshiTab + 1}Pが相棒を『${newLeader.charName}』に変更！「${newLeader.selectQuote}」`, "text-yellow-300 font-bold");
+        }
+
+        function updateActiveModalPlayerName(val) {
+            const trimmed = val.trim();
+            if (!trimmed) return;
+            state.players[state.activeOshiTab].name = trimmed;
+            savePrefs();
+            renderAllPlayerCards();
+            renderMiniScoreboard();
+            renderOshiModalContent();
+        }
+
+        function renderOshiModalContent() {
+            [1, 2, 3].forEach(n => {
+                const btn = document.getElementById(`modalCountBtn${n}`);
+                btn.className = n === state.playerCount
+                    ? "px-2.5 py-1 rounded-lg text-xs font-black bg-yellow-400 text-black shadow"
+                    : "px-2.5 py-1 rounded-lg text-xs font-bold text-slate-300 hover:bg-slate-800";
+            });
+
+            const tabsEl = document.getElementById('oshiPlayerTabs');
+            tabsEl.innerHTML = getActivePlayers().map((p, idx) => {
+                const active = idx === state.activeOshiTab;
+                return `
+                    <button onclick="selectOshiTab(${idx})" class="px-3 py-1.5 rounded-xl font-manga text-xs sm:text-sm flex items-center gap-1.5 border transition ${
+                        active
+                            ? `bg-gradient-to-r ${p.leader.headerBg} text-white border-yellow-300 shadow-lg scale-105`
+                            : 'bg-slate-800 text-slate-300 border-slate-600 hover:bg-slate-700'
+                    }">
+                        <img src="${p.leader.portrait}" alt="" class="w-5 h-5 rounded-full object-cover border border-white/60">
+                        <span>${idx + 1}P: ${p.name}</span>
+                    </button>
+                `;
+            }).join('');
+
+            const activePlayer = state.players[state.activeOshiTab];
+            document.getElementById('oshiModalNameInput').value = activePlayer.name;
+
+            const gridEl = document.getElementById('oshiLeaderGrid');
+            gridEl.innerHTML = OSHI_LEADERS.map(leader => {
+                const isSelected = activePlayer.leader.id === leader.id;
+                return `
+                    <button onclick="chooseOshiLeaderForSlot('${leader.id}')" class="relative rounded-2xl p-1 bg-gradient-to-br ${
+                        isSelected ? 'from-yellow-200 via-amber-400 to-red-500 scale-[1.02] shadow-[0_0_24px_rgba(250,204,21,0.85)]' : 'from-slate-700 to-slate-900 hover:from-yellow-400/70 hover:to-red-500/70'
+                    } transition text-left overflow-hidden group active:scale-95">
+                        <div class="bg-slate-950 rounded-[13px] overflow-hidden flex flex-col h-full">
+                            <div class="relative h-28 sm:h-36 w-full overflow-hidden ${isSelected ? 'holo-card-opened' : ''}">
+                                <img src="${leader.portrait}" alt="${leader.charName}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                <div class="absolute top-1.5 left-1.5 bg-black/75 border border-white/30 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                    ${leader.badge}
+                                </div>
+                                ${isSelected ? `<div class="absolute top-1.5 right-1.5 bg-yellow-300 text-black font-black text-[10px] px-2 py-0.5 rounded-full shadow">✨選択中</div>` : ''}
+                                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/75 to-transparent pt-6 pb-1.5 px-2.5">
+                                    <div class="font-manga text-sm sm:text-base text-white text-stroke-xs">${leader.charName}</div>
+                                </div>
+                            </div>
+                            <div class="p-2 flex items-center justify-between text-[10px] sm:text-xs bg-gradient-to-r ${leader.headerBg}">
+                                <span class="font-black text-white">ゲット印: ${leader.sealIcon}${leader.sealText}</span>
+                                <span class="bg-black/55 text-yellow-200 px-1.5 py-0.5 rounded font-bold">🔊なきごえ付</span>
+                            </div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        /* ==========================================================
+           7. モンスターボール抽選実行エンジン
+        ========================================================== */
+        function triggerPokeballDraw(isQuick = false) {
+            unlockTabletAudioOnce();
+            if (state.isSpinning) return;
+
+            if (state.remainingIds.length === 0) {
+                playSysVoice('complete', '🌟 全75匹コンプリート！', '全75ひきのポケモンが大集結したぞ！最高のポケモンマスターだ！', '../assets/audio/cries/dex_25.mp3');
+                addCommentary("🌟 【図鑑コンプリート】全75枚のポケモンキラカードがすべて登場したロト！！", "text-yellow-300 font-black");
+                return;
+            }
+
+            state.isSpinning = true;
+            const drawBtn = document.getElementById('drawButton');
+            const quickBtn = document.getElementById('quickDrawButton');
+            drawBtn.disabled = true;
+            quickBtn.disabled = true;
+            drawBtn.classList.add('opacity-60');
+
+            const randIdx = Math.floor(Math.random() * state.remainingIds.length);
+            const pickedId = Number(state.remainingIds.splice(randIdx, 1)[0]);
+            const item = POKEMON_POOL.find(x => x.id === pickedId);
+
+            if (isQuick) {
+                playBallOpenPopSound();
+                completeDrawAndOpenCards(item);
+                return;
+            }
+
+            const overlay = document.getElementById('pokeballSpinOverlay');
+            const ballImg = document.getElementById('spinBallImg');
+            const ballBadge = document.getElementById('spinBallBadge');
+            overlay.classList.remove('hidden');
+
+            let step = 0;
+            if (state.spinIntervalId) clearInterval(state.spinIntervalId);
+
+            state.spinIntervalId = setInterval(() => {
+                const info = BALL_SPIN_STEPS[step % BALL_SPIN_STEPS.length];
+                ballImg.src = info.img;
+                ballBadge.textContent = info.label;
+                playBallWobbleSound(0.95 + step * 0.14);
+                step++;
+                if (step >= BALL_SPIN_STEPS.length) {
+                    clearInterval(state.spinIntervalId);
+                    state.spinIntervalId = null;
+                    overlay.classList.add('hidden');
+                    completeDrawAndOpenCards(item);
+                }
+            }, 105);
+        }
+
+        function completeDrawAndOpenCards(item) {
+            const numId = Number(item.id);
+            state.drawnSet.add(numId);
+            state.drawnHistory.unshift(numId);
+            state.latestDrawnId = numId;
+
+            playBallOpenPopSound();
+            const mainStage = document.getElementById('mainStage');
+            mainStage.classList.remove('shake-active');
+            void mainStage.offsetWidth;
+            mainStage.classList.add('shake-active');
+
+            const hitPlayers = [];
+            const reachUpPlayers = [];
+            const bingoUpPlayers = [];
+
+            state.players.forEach((player, idx) => {
+                const res = syncAndEvaluatePlayer(player);
+                if (idx < state.playerCount) {
+                    if (res.hitLatest) hitPlayers.push(player);
+                    if (res.bingoIncreased) bingoUpPlayers.push(player);
+                    else if (res.reachIncreased) reachUpPlayers.push(player);
+                }
+            });
+
+            updateTopLotteryDisplay(item);
+            renderAllPlayerCards();
+            renderMiniScoreboard();
+            renderHorizontalHistory();
+            renderFullHistoryModalGrid();
+
+            const hitNamesLog = hitPlayers.map(p => `【${p.name}】`).join("・");
+            if (hitPlayers.length > 0) {
+                addCommentary(`🔴 No.${item.id}『${item.name}』登場！ → ${hitNamesLog} がポケモンゲット！！`, "text-yellow-300 font-black");
+            } else {
+                addCommentary(`💨 No.${item.id}『${item.name}』登場！（現在のカードには配置なし）`, "text-slate-400");
+            }
+
+            playSummonSequence(item, hitPlayers, reachUpPlayers, bingoUpPlayers);
+
+            if (bingoUpPlayers.length > 0) {
+                playBingoFanfare();
+                triggerPokeballFireworks();
+                showBingoModal(bingoUpPlayers[0]);
+            } else if (reachUpPlayers.length > 0) {
+                playCaptureChime(true);
+            } else if (hitPlayers.length > 0) {
+                playCaptureChime(false);
+            }
+
+            state.isSpinning = false;
+            const drawBtn = document.getElementById('drawButton');
+            const quickBtn = document.getElementById('quickDrawButton');
+            drawBtn.disabled = false;
+            quickBtn.disabled = false;
+            drawBtn.classList.remove('opacity-60');
+        }
+
+        /* ==========================================================
+           8. UI描画：上部ショーケース・履歴・相棒別ビンゴカード
+        ========================================================== */
+        function updateTopLotteryDisplay(item) {
+            const count = state.drawnHistory.length;
+            document.getElementById('headerDrawnCount').textContent = count;
+            document.getElementById('drawnCounterBadge').textContent = `${count}/75`;
+
+            const cardImg = document.getElementById('currentCardImg');
+            const numBadge = document.getElementById('currentNumberBadge');
+            const rarityBadge = document.getElementById('currentRarityBadge');
+            const attrBadge = document.getElementById('currentAttrBadge');
+            const rankTag = document.getElementById('currentRankTag');
+            const moveTag = document.getElementById('currentMoveTag');
+            const charName = document.getElementById('currentCharName');
+            const quoteEl = document.getElementById('currentQuote');
+
+            if (!item) {
+                cardImg.src = "../assets/cards/free.webp";
+                numBadge.textContent = "待機";
+                rarityBadge.textContent = "★";
+                attrBadge.textContent = "マスターボール";
+                rankTag.textContent = "ポケモンビンゴ・開幕待機";
+                moveTag.textContent = "相棒ポケモンを選んでスタート！";
+                charName.textContent = "ボールを投げて ポケモンゲットだぜ！";
+                quoteEl.textContent = "「ボール抽選ボタンを押すと、実況ボイス＆本物のポケモンのなきごえ＆ロトム図鑑解説が流れるぞ！！」";
+                return;
+            }
+
+            const colLetter = ["B", "I", "N", "G", "O"][Math.floor((item.id - 1) / 15)];
+            cardImg.src = item.img;
+            numBadge.textContent = `${colLetter}-${item.id}`;
+            rarityBadge.textContent = item.rarity;
+            attrBadge.textContent = item.attr;
+            rankTag.textContent = `ゲット 【${colLetter}の ${item.id}番】`;
+            moveTag.textContent = `${item.emoji} わざ：${item.move}`;
+            charName.textContent = item.name;
+            quoteEl.textContent = `📱図鑑：「${item.quote}」`;
+        }
+
+        function renderHorizontalHistory() {
+            const bar = document.getElementById('horizontalHistoryBar');
+            if (state.drawnHistory.length === 0) {
+                bar.innerHTML = `<span class="text-[11px] text-slate-400 italic">まだ 登場した ポケモンは いないよ…</span>`;
+                return;
+            }
+            bar.innerHTML = state.drawnHistory.map((id, idx) => {
+                const item = POKEMON_POOL.find(x => x.id === id);
+                const isLatest = idx === 0;
+                const badgeClass = isLatest
+                    ? "bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 text-black font-black border border-white shadow"
+                    : "bg-slate-800 hover:bg-slate-700 text-yellow-200 border border-yellow-400/40 font-bold";
+                return `
+                    <button onclick="openCardZoomById(${item.id})" class="pl-1 pr-2 py-0.5 rounded-lg text-[10px] sm:text-xs flex items-center gap-1 shrink-0 transition active:scale-95 ${badgeClass}">
+                        <img src="${item.img}" alt="" class="w-5 h-5 rounded object-cover border border-black/40">
+                        <span>${item.id}.${item.cardName}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function getColBadgeColor(colIdx) {
+            return [
+                "bg-amber-500 text-black",
+                "bg-red-600 text-white",
+                "bg-purple-600 text-white",
+                "bg-emerald-600 text-white",
+                "bg-sky-500 text-black"
+            ][colIdx] || "bg-yellow-500 text-black";
+        }
+
+        function renderAllPlayerCards() {
+            const container = document.getElementById('cardsGrid');
+            container.innerHTML = '';
+
+            const headerLetters = [
+                { char: 'B', sub: '1-15',  color: 'from-amber-400 to-orange-500' },
+                { char: 'I', sub: '16-30', color: 'from-red-500 to-rose-600' },
+                { char: 'N', sub: '31-45', color: 'from-purple-500 to-indigo-600' },
+                { char: 'G', sub: '46-60', color: 'from-emerald-500 to-teal-600' },
+                { char: 'O', sub: '61-75', color: 'from-sky-400 to-blue-600' }
+            ];
+
+            getActivePlayers().forEach((player, pIdx) => {
+                const leader = player.leader;
+                const pct = Math.round((player.openedCount / 25) * 100);
+                const reachAuraClass = (player.reachCount > 0 && player.bingoCount === 0)
+                    ? "aura-reach-active !border-yellow-300"
+                    : (player.bingoCount > 0 ? "!border-yellow-200 shadow-[0_0_24px_rgba(250,204,21,0.85)]" : "");
+
+                let statusPill = '';
+                if (player.bingoCount > 0) {
+                    statusPill = `<span class="bg-yellow-300 text-black font-black text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full animate-bounce shrink-0">🏆${player.bingoCount}BINGO!</span>`;
+                } else if (player.reachCount > 0) {
+                    statusPill = `<span class="bg-red-600 text-white font-black text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full animate-pulse shrink-0">${leader.reachTitle}</span>`;
+                } else {
+                    statusPill = `<span class="hidden xl:inline-block bg-black/55 text-yellow-200 font-bold text-[9px] px-1.5 py-0.5 rounded-full truncate">${leader.badge}</span>`;
+                }
+
+                let cellsHtml = '';
+                for (let r = 0; r < 5; r++) {
+                    for (let c = 0; c < 5; c++) {
+                        const cell = player.grid[r][c];
+                        const isLatestHit = (!cell.isFree && cell.id === state.latestDrawnId);
+                        const colBadge = getColBadgeColor(c);
+
+                        let frameClass = '';
+                        let imgFilterClass = '';
+                        let sealBadgeHtml = '';
+                        let nameRibbonClass = '';
+
+                        if (isLatestHit) {
+                            frameClass = 'cell-latest-hit holo-card-opened';
+                            imgFilterClass = 'brightness-110 saturate-125 scale-105';
+                            sealBadgeHtml = `<span class="bg-yellow-300 text-black font-black text-[8px] sm:text-[9px] px-1 rounded shadow">🔴GET!</span>`;
+                            nameRibbonClass = `bg-gradient-to-r ${leader.openRibbon} text-yellow-100`;
+                        } else if (cell.inBingoLine) {
+                            frameClass = 'cell-bingo-line holo-card-opened';
+                            imgFilterClass = 'brightness-110 saturate-125';
+                            sealBadgeHtml = `<span class="bg-yellow-300 text-black font-black text-[8px] sm:text-[9px] px-1 rounded shadow">🏆殿堂</span>`;
+                            nameRibbonClass = 'bg-gradient-to-r from-amber-500 via-red-600 to-amber-500 text-white';
+                        } else if (cell.opened) {
+                            frameClass = `border-2 ${leader.openBorder} holo-card-opened`;
+                            imgFilterClass = 'brightness-105 saturate-115';
+                            sealBadgeHtml = cell.isFree
+                                ? `<span class="bg-yellow-300 text-black font-black text-[8px] px-1 rounded shadow">FREE</span>`
+                                : `<span class="bg-red-600 text-white border border-yellow-200 font-black text-[8px] px-1 rounded shadow">${leader.sealIcon}GET</span>`;
+                            nameRibbonClass = `bg-gradient-to-r ${leader.openRibbon} text-white`;
+                        } else {
+                            frameClass = 'border border-slate-700/90 hover:border-yellow-400/70';
+                            imgFilterClass = 'brightness-[0.62] contrast-105 saturate-90 group-hover:brightness-90';
+                            nameRibbonClass = 'bg-black/80 text-slate-200';
+                        }
+
+                        const cellPortrait = cell.isFree ? leader.portrait : cell.img;
+                        const displayCardName = cell.isFree ? `${leader.charName}★` : cell.cardName;
+
+                        cellsHtml += `
+                            <button onclick="handleCellTap(${pIdx}, ${r}, ${c})" class="group relative w-full h-full min-h-0 rounded-xl overflow-hidden bg-slate-900 transition active:scale-95 flex flex-col justify-between ${frameClass}">
+                                <img src="${cellPortrait}" alt="${displayCardName}" loading="lazy" class="absolute inset-0 w-full h-full object-cover transition duration-200 ${imgFilterClass}">
+                                <div class="relative z-10 w-full flex items-start justify-between p-0.5 sm:p-1 pointer-events-none">
+                                    <span class="${cell.isFree ? 'bg-yellow-300 text-black' : colBadge} font-black text-[8px] sm:text-[10px] px-1 py-0.1 rounded shadow leading-tight border border-black/40">
+                                        ${cell.isFree ? '★' : cell.id}
+                                    </span>
+                                    ${sealBadgeHtml}
+                                </div>
+                                <div class="relative z-10 w-full ${nameRibbonClass} backdrop-blur-[1px] py-0.5 px-0.5 border-t border-white/15 pointer-events-none">
+                                    <span class="block text-[8px] sm:text-[10px] tracking-tighter font-black leading-none truncate text-center text-stroke-xs">
+                                        ${displayCardName}
+                                    </span>
+                                </div>
+                            </button>
+                        `;
+                    }
+                }
+
+                const cardEl = document.createElement('div');
+                cardEl.className = `h-full flex flex-col justify-between bg-gradient-to-b ${leader.cardBg} border-2 ${leader.borderClass} ${reachAuraClass} rounded-2xl p-1.5 sm:p-2.5 shadow-xl overflow-hidden`;
+                cardEl.innerHTML = `
+                    <div class="shrink-0">
+                        <div class="bg-gradient-to-r ${leader.headerBg} rounded-xl p-1.5 border border-white/25 flex items-center gap-2 relative overflow-hidden">
+                            <button onclick="openOshiModal(${pIdx})" class="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden border-2 border-yellow-200 shadow-md shrink-0 group active:scale-95" title="相棒ポケモン変更">
+                                <img src="${leader.portrait}" alt="${leader.charName}" class="w-full h-full object-cover group-hover:scale-110 transition">
+                                <span class="absolute inset-x-0 bottom-0 bg-black/80 text-[7px] sm:text-[8px] font-black text-yellow-300 text-center leading-tight py-0.2">変更</span>
+                            </button>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-1 mb-0.5">
+                                    ${statusPill}
+                                    <div class="flex items-center gap-1 text-[9px] sm:text-[11px] font-manga whitespace-nowrap ml-auto shrink-0">
+                                        <span class="bg-black/75 text-yellow-300 px-1 py-0.2 rounded border border-yellow-400/40">BINGO:${player.bingoCount}</span>
+                                        <span class="bg-black/75 text-orange-300 px-1 py-0.2 rounded border border-orange-400/40">リーチ:${player.reachCount}</span>
+                                    </div>
+                                </div>
+                                <input type="text" value="${player.name}" onchange="updatePlayerName(${pIdx}, this.value)" aria-label="カード名"
+                                    class="w-full bg-black/45 focus:bg-black/80 text-white font-manga text-[11px] sm:text-sm px-2 py-0.5 rounded-lg border border-white/25 focus:border-yellow-300 focus:outline-none" />
+                            </div>
+                        </div>
+
+                        <div class="mt-1 mb-1 flex items-center gap-1.5">
+                            <div class="text-[8.5px] sm:text-[10px] font-bold text-yellow-300 shrink-0">
+                                🔴ゲット ${player.openedCount}/25
+                            </div>
+                            <div class="flex-1 h-1.5 sm:h-2 bg-slate-800 rounded-full overflow-hidden border border-slate-600">
+                                <div class="h-full rounded-full bg-gradient-to-r ${leader.barColor} transition-all duration-300" style="width: ${pct}%"></div>
+                            </div>
+                            <div class="text-[8.5px] sm:text-[10px] font-black text-white shrink-0">${pct}%</div>
+                        </div>
+
+                        <div class="grid grid-cols-5 gap-1 mb-1">
+                            ${headerLetters.map(h => `
+                                <div class="bg-gradient-to-b ${h.color} rounded-md py-0.5 text-center border border-white/20 flex items-center justify-center gap-0.5">
+                                    <span class="font-manga text-[10px] sm:text-xs text-white text-stroke-xs leading-none">${h.char}</span>
+                                    <span class="text-[7px] sm:text-[8px] text-white font-bold leading-none hidden sm:inline">${h.sub}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="flex-1 min-h-0 grid grid-cols-5 grid-rows-5 gap-1 sm:gap-1.5">
+                        ${cellsHtml}
+                    </div>
+                `;
+                container.appendChild(cardEl);
+            });
+        }
+
+        /* ==========================================================
+           9. カードタップ・図鑑・拡大ショーケース操作
+        ========================================================== */
+        function handleCellTap(playerIdx, r, c) {
+            unlockTabletAudioOnce();
+            const player = state.players[playerIdx];
+            const cell = player.grid[r][c];
+            if (cell.isFree) {
+                playBallWobbleSound(1.2);
+                playLeaderSelectVoice(player.leader);
+                return;
+            }
+            const item = POKEMON_POOL.find(x => x.id === Number(cell.id));
+            if (item) {
+                playBallWobbleSound(1.05);
+                openCardZoomById(item.id);
+            }
+        }
+
+        function openCurrentCardZoom() {
+            if (!state.latestDrawnId) {
+                openOshiModal(0);
+                return;
+            }
+            openCardZoomById(state.latestDrawnId);
+        }
+
+        function openCardZoomById(id) {
+            unlockTabletAudioOnce();
+            const item = POKEMON_POOL.find(x => x.id === Number(id));
+            if (!item) return;
+            const isDrawn = state.drawnSet.has(item.id);
+            const colLetter = ["B", "I", "N", "G", "O"][Math.floor((item.id - 1) / 15)];
+
+            document.getElementById('zoomCardImg').src = item.img;
+            document.getElementById('zoomCardNum').textContent = `${colLetter}-${item.id} ${isDrawn ? '【ゲット済】' : '【未登場】'}`;
+            document.getElementById('zoomCardAttr').textContent = `${item.attr}・${item.rarity}`;
+            document.getElementById('zoomCardMove').textContent = `${item.emoji} わざ：${item.move}`;
+            document.getElementById('zoomCardName').textContent = item.name;
+            document.getElementById('zoomCardQuote').textContent = `📱「${item.quote}」`;
+
+            document.getElementById('zoomReplayBtn').onclick = () => playCharacterQuoteOnly(item);
+            document.getElementById('cardZoomModal').classList.remove('hidden');
+            playCharacterQuoteOnly(item);
+        }
+
+        function closeCardZoomModal(e) {
+            if (e && e.target !== e.currentTarget) return;
+            document.getElementById('cardZoomModal').classList.add('hidden');
+        }
+
+        function updatePlayerName(playerIdx, newName) {
+            const trimmed = newName.trim();
+            if (trimmed) {
+                state.players[playerIdx].name = trimmed;
+                savePrefs();
+                renderMiniScoreboard();
+            }
+        }
+
+        function renderMiniScoreboard() {
+            const board = document.getElementById('miniScoreboard');
+            if (!board) return;
+            const active = getActivePlayers();
+            board.className = `grid grid-cols-${active.length} gap-1.5 shrink-0 mb-1.5`;
+            board.innerHTML = active.map(p => {
+                const isBingo = p.bingoCount > 0;
+                const isReach = p.reachCount > 0;
+                const statusText = isBingo ? `🏆 ${p.bingoCount} BINGO` : (isReach ? `⚡ ${p.reachCount} リーチ` : `${p.openedCount}/25 GET`);
+                const statusColor = isBingo ? 'bg-yellow-400 text-black font-black' : (isReach ? 'bg-red-600 text-white font-black animate-pulse' : 'bg-slate-800 text-slate-300');
+                return `
+                    <div class="bg-slate-950 border ${p.leader.borderClass} rounded-xl p-1.5 flex items-center gap-1.5">
+                        <img src="${p.leader.portrait}" alt="" class="w-7 h-7 rounded-lg object-cover border border-white/40 shrink-0">
+                        <div class="min-w-0 flex-1">
+                            <div class="text-[10px] font-bold text-yellow-200 truncate">${p.name}</div>
+                            <div class="text-[9px] mt-0.5 px-1 py-0.2 rounded text-center ${statusColor}">${statusText}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderFullHistoryModalGrid() {
+            const grid = document.getElementById('fullHistoryGrid');
+            if (!grid) return;
+            grid.innerHTML = POKEMON_POOL.map(item => {
+                const isDrawn = state.drawnSet.has(item.id);
+                const isLatest = state.latestDrawnId === item.id;
+                const borderCls = isLatest
+                    ? "border-2 border-yellow-300 shadow-[0_0_15px_rgba(250,204,21,0.9)]"
+                    : (isDrawn ? "border-2 border-amber-400" : "border border-slate-700 opacity-65 hover:opacity-100");
+                return `
+                    <button onclick="openCardZoomById(${item.id})" class="relative aspect-square rounded-xl overflow-hidden bg-slate-900 transition active:scale-95 group ${borderCls}">
+                        <img src="${item.img}" alt="${item.cardName}" loading="lazy" class="w-full h-full object-cover ${isDrawn ? '' : 'grayscale-[55%]'} group-hover:scale-105 transition">
+                        <span class="absolute top-1 left-1 bg-black/80 text-yellow-300 text-[9px] font-black px-1 rounded">${item.id}</span>
+                        ${isDrawn ? `<span class="absolute top-1 right-1 bg-red-600 text-white text-[8px] font-black px-1 rounded">GET</span>` : ''}
+                        <div class="absolute inset-x-0 bottom-0 bg-black/85 py-0.5 px-1">
+                            <span class="block text-[9px] font-black text-white truncate text-center">${item.cardName}</span>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function addCommentary(text, colorClass = "text-slate-200") {
+            const box = document.getElementById('liveCommentaryBox');
+            if (!box) return;
+            const entry = document.createElement('div');
+            entry.className = `${colorClass} border-b border-slate-800/80 pb-1`;
+            entry.textContent = text;
+            box.prepend(entry);
+        }
+
+        function openPokedexModal() {
+            playBallWobbleSound(1.0);
+            renderFullHistoryModalGrid();
+            document.getElementById('pokedexModal').classList.remove('hidden');
+        }
+        function closePokedexModal() {
+            document.getElementById('pokedexModal').classList.add('hidden');
+        }
+
+        function showBingoModal(player) {
+            const modal = document.getElementById('bingoCutinModal');
+            document.getElementById('bingoModalPortrait').src = player.leader.portrait;
+            document.getElementById('bingoModalTitle').textContent = `${player.name} がビンゴ達成！！`;
+            const rankTitle = BINGO_TITLES[(player.rankOrder || 1) - 1] || "🔥 ポケモンマスター級";
+            document.getElementById('bingoModalRankBadge').textContent = `${rankTitle} （${player.bingoCount} ライン達成！）`;
+            document.getElementById('bingoModalQuote').textContent = `「${player.leader.bingoQuote}」`;
+            modal.classList.remove('hidden');
+        }
+        function closeBingoModal() {
+            playBallWobbleSound(1.2);
+            document.getElementById('bingoCutinModal').classList.add('hidden');
+        }
+
+        function openResetModal() {
+            playBallWobbleSound(0.9);
+            document.getElementById('resetConfirmModal').classList.remove('hidden');
+        }
+        function closeResetModal() {
+            document.getElementById('resetConfirmModal').classList.add('hidden');
+        }
+        function confirmResetGame() {
+            unlockTabletAudioOnce();
+            closeResetModal();
+            playBallOpenPopSound();
+            initGame(true);
+            playSysVoice('reset', '🔄 新カード配布！', 'モンスターボールリセット！あたらしいポケモンカードでぼうけんスタートだぜ！');
+            addCommentary("🔄 【新カード配布】相棒カードに新しい25匹のポケモンが配置されたロト！", "text-yellow-300 font-bold");
+        }
+
+        /* ==========================================================
+           10. 背景スター＆モンスターボール花火アニメーション
+        ========================================================== */
+        const canvas = document.getElementById('sparkleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let celebrationBursts = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function initAmbientParticles() {
+            particles = [];
+            for (let i = 0; i < 32; i++) {
+                particles.push({
+                    x: Math.random() * window.innerWidth,
+                    y: Math.random() * window.innerHeight,
+                    radius: Math.random() * 2.4 + 1,
+                    vx: (Math.random() - 0.5) * 0.45,
+                    vy: -Math.random() * 0.9 - 0.25,
+                    alpha: Math.random() * 0.5 + 0.2,
+                    color: ['#fde047', '#ef4444', '#38bdf8', '#f472b6'][Math.floor(Math.random() * 4)]
+                });
+            }
+        }
+
+        function triggerPokeballFireworks() {
+            const colors = ['#fde047', '#ef4444', '#38bdf8', '#a855f7', '#34d399', '#ffffff'];
+            for (let b = 0; b < 4; b++) {
+                const cx = window.innerWidth * (0.2 + 0.2 * b);
+                const cy = window.innerHeight * (0.25 + Math.random() * 0.3);
+                for (let i = 0; i < 28; i++) {
+                    const angle = (Math.PI * 2 * i) / 28;
+                    const speed = Math.random() * 5.5 + 2;
+                    celebrationBursts.push({
+                        x: cx, y: cy,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        radius: Math.random() * 3.5 + 2,
+                        alpha: 1,
+                        color: colors[Math.floor(Math.random() * colors.length)]
+                    });
+                }
+            }
+        }
+
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+            for (let i = celebrationBursts.length - 1; i >= 0; i--) {
+                const b = celebrationBursts[i];
+                b.x += b.vx; b.y += b.vy; b.vy += 0.08; b.alpha -= 0.018;
+                if (b.alpha <= 0) { celebrationBursts.splice(i, 1); continue; }
+                ctx.save();
+                ctx.globalAlpha = b.alpha;
+                ctx.fillStyle = b.color;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            requestAnimationFrame(animateCanvas);
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            resizeCanvas();
+            initAmbientParticles();
+            initGame(false);
+            animateCanvas();
+            await loadAudioManifest();
+        });
+    </script>
+</body>
+</html>

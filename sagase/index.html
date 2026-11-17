@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ポケモンさがせ">
+    <meta name="theme-color" content="#10b981">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="../assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
+    <title>ポケモンをさがせ！ だいパノラマたんけん！</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100dvh;
+            max-height: 100dvh;
+            overflow: hidden;
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #071318;
+            color: #fff;
+            user-select: none;
+        }
+        .text-outline {
+            text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 5px rgba(0,0,0,0.9);
+        }
+        .text-outline-sm {
+            text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        }
+
+        @keyframes gentleBob {
+            0%, 100% { transform: translateY(0px); }
+            50%      { transform: translateY(-3px); }
+        }
+        .poke-bob { animation: gentleBob 2.8s ease-in-out infinite; }
+
+        @keyframes targetFoundPop {
+            0%   { transform: scale(1); }
+            40%  { transform: scale(1.45) rotate(-8deg); filter: drop-shadow(0 0 18px #fde047); }
+            100% { transform: scale(1.15); filter: drop-shadow(0 0 12px #fde047); }
+        }
+        .poke-found-anim {
+            animation: targetFoundPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+            z-index: 950 !important;
+        }
+
+        @keyframes wrongWiggle {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(-14deg) scale(1.18); }
+            75% { transform: rotate(14deg) scale(1.18); }
+        }
+        .poke-wiggle { animation: wrongWiggle 0.36s ease-in-out; }
+
+        @keyframes radarPulse {
+            0%   { transform: translate(-50%, -50%) scale(0.75); opacity: 0.95; }
+            70%  { transform: translate(-50%, -50%) scale(1.25); opacity: 0.35; }
+            100% { transform: translate(-50%, -50%) scale(0.75); opacity: 0.95; }
+        }
+        .hint-radar-ring {
+            animation: radarPulse 1.3s ease-in-out infinite;
+        }
+
+        @keyframes shinySparkle {
+            0%, 80%, 100% { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.65)); }
+            90% { filter: drop-shadow(0 0 14px #fef08a) brightness(1.22); }
+        }
+        .shiny-glint { animation: shinySparkle 3.6s ease-in-out infinite; }
+
+        .manga-burst {
+            background: repeating-conic-gradient(
+                from 0deg,
+                rgba(52, 211, 153, 0.12) 0deg 3deg,
+                transparent 3deg 9deg
+            );
+        }
+    </style>
+</head>
+<body class="relative w-screen h-[100dvh] overflow-hidden flex flex-col justify-between">
+
+    <audio id="voiceAudio" preload="auto" playsinline class="hidden"></audio>
+    <canvas id="fxCanvas" class="fixed inset-0 pointer-events-none z-40"></canvas>
+
+    <!-- ==========================================================
+         スタート＆ワールドえらび オーバーレイ
+    =========================================================== -->
+    <div id="setupOverlay" class="fixed inset-0 z-50 bg-gradient-to-br from-slate-950 via-emerald-950/95 to-teal-950 flex flex-col justify-between p-3 sm:p-5 overflow-y-auto">
+        <div class="manga-burst fixed inset-0 pointer-events-none"></div>
+
+        <div class="relative z-10 w-full max-w-6xl mx-auto flex items-center justify-between shrink-0">
+            <a href="../index.html" class="px-3 py-1.5 rounded-2xl bg-slate-800/90 border-2 border-emerald-400 text-emerald-200 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
+                <span>🏠</span><span>ゲーム いちらんへ</span>
+            </a>
+            <div class="inline-flex items-center gap-2 bg-gradient-to-r from-lime-300 via-emerald-400 to-teal-400 text-black font-black text-xs sm:text-sm px-4 py-1 rounded-full border-2 border-white shadow">
+                <span>🔍 ウォーリーをさがせ！ふう ポケモンたんけん</span>
+            </div>
+            <button onclick="toggleMute()" class="mute-btn px-3 py-1.5 rounded-2xl bg-emerald-900/90 border-2 border-emerald-400 text-emerald-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
+                <span>🔊</span><span>おと オン</span>
+            </button>
+        </div>
+
+        <div class="relative z-10 w-full max-w-6xl mx-auto text-center my-1">
+            <h1 class="text-2xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-200 via-lime-300 to-emerald-400 drop-shadow-[0_4px_12px_rgba(16,185,129,0.5)]">
+                🔍 ポケモンをさがせ！ だいパノラマたんけん！
+            </h1>
+            <p class="text-xs sm:text-base font-extrabold text-emerald-200 mt-0.5">
+                ぎっしり あつまった ポケモンたちの なかから、おだいの ポケモンや ✨いろちがい を みつけよう！
+            </p>
+        </div>
+
+        <!-- 1. 4つのワールド選択 -->
+        <div class="relative z-10 w-full max-w-6xl mx-auto">
+            <div class="text-xs sm:text-base font-black text-yellow-300 mb-1.5">🌍 ① たんけんする ワールドを えらぼう！</div>
+            <div id="worldSelectGrid" class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3"></div>
+        </div>
+
+        <!-- 2. むずかしさ ＆ あそびかた選択 -->
+        <div class="relative z-10 w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-3 my-2">
+            <div class="bg-slate-900/85 border-2 border-emerald-500/60 rounded-2xl p-2.5 sm:p-3">
+                <div class="text-xs sm:text-sm font-black text-lime-300 mb-2">⚡ ② むずかしさ（ポケモンの かず）</div>
+                <div id="diffButtons" class="grid grid-cols-3 gap-2"></div>
+            </div>
+
+            <div class="bg-slate-900/85 border-2 border-cyan-500/60 rounded-2xl p-2.5 sm:p-3">
+                <div class="text-xs sm:text-sm font-black text-cyan-300 mb-2">👥 ③ あそびかた（きょうりょく / たいせん）</div>
+                <div id="modeButtons" class="grid grid-cols-4 gap-2"></div>
+            </div>
+        </div>
+
+        <div class="relative z-10 w-full max-w-6xl mx-auto text-center pb-1">
+            <button onclick="startPanoramaGame()" class="px-10 py-3 sm:py-4 rounded-3xl font-black text-lg sm:text-2xl text-black bg-gradient-to-r from-yellow-300 via-lime-300 to-emerald-400 border-4 border-white shadow-[0_0_30px_rgba(52,211,153,0.9)] active:scale-95 transition inline-flex items-center gap-3">
+                <span>🔍</span>
+                <span>たんけん スタート！！</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================================
+         メインたんけん画面（100dvh 固定）
+    =========================================================== -->
+    <!-- 上部：おだいのポケモンリスト ＆ 操作バー -->
+    <header class="relative z-30 bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-950 border-b-2 border-emerald-400 px-2 sm:px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <!-- 左：ホーム・ワールド変更・タイマー -->
+        <div class="flex items-center gap-1.5 shrink-0">
+            <a href="../index.html" class="px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-emerald-400/70 text-xs font-black flex items-center gap-1 active:scale-95" title="ポータルへ">🏠</a>
+            <button onclick="returnToSetup()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-yellow-400/70 text-yellow-200 text-xs font-black active:scale-95">
+                🌍 ワールドを かえる
+            </button>
+            <div class="bg-black/75 border border-emerald-400/60 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-black text-emerald-300">
+                ⏱️ <span id="timerLabel">00:00</span>
+            </div>
+        </div>
+
+        <!-- 中央：さがす「おだいのポケモン」カードバー -->
+        <div id="targetsBar" class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-0.5 flex-1 justify-center"></div>
+
+        <!-- 右：虫めがねズーム ＆ ロトムのヒント ＆ 音 -->
+        <div class="flex items-center gap-1.5 shrink-0">
+            <button onclick="cycleZoomLevel()" id="zoomBtn" class="px-2.5 py-1.5 rounded-xl bg-sky-900 hover:bg-sky-800 border-2 border-sky-300 text-sky-100 text-xs sm:text-sm font-black flex items-center gap-1 shadow active:scale-95">
+                <span>🔍</span><span id="zoomBtnText">1.0x</span>
+            </button>
+            <button onclick="triggerRotomHint()" class="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-black border-2 border-white text-xs sm:text-sm font-black flex items-center gap-1 shadow active:scale-95">
+                <span>💡</span><span>ヒント</span>
+            </button>
+            <button onclick="toggleMute()" class="mute-btn px-2 py-1.5 rounded-xl bg-emerald-900 border border-emerald-400 text-xs sm:text-sm font-black active:scale-95">🔊</button>
+        </div>
+    </header>
+
+    <!-- 対戦モード用スコアバー（2〜4人モード時のみ表示） -->
+    <div id="battleScoreBar" class="hidden relative z-25 bg-slate-900/95 border-b border-slate-700 px-3 py-1 items-center justify-center gap-2 sm:gap-4 shrink-0"></div>
+
+    <!-- 中央：ドラッグ＆ズーム自在の巨大パノラマビューポート -->
+    <main id="viewportContainer" class="relative flex-1 min-h-0 w-full overflow-hidden bg-slate-950 cursor-grab active:cursor-grabbing touch-none">
+        <!-- 1920x1080 仮想パノラマステージ -->
+        <div id="panoramaStage" class="absolute top-0 left-0 origin-top-left will-change-transform" style="width:1920px; height:1080px;">
+            <img id="worldBgImg" src="./assets/world_forest.webp" alt="ワールド" draggable="false" class="absolute inset-0 w-full h-full object-cover pointer-events-none select-none">
+
+            <!-- ロトムのヒントレーダーリング -->
+            <div id="hintRadarRing" class="hidden absolute pointer-events-none z-[900] w-64 h-64 rounded-full border-8 border-yellow-300 bg-yellow-300/20 shadow-[0_0_45px_rgba(253,224,71,0.95)] hint-radar-ring"></div>
+
+            <!-- 145匹のポケモン配置レイヤー -->
+            <div id="crowdLayer" class="absolute inset-0"></div>
+
+            <!-- 吹き出しポップアップレイヤー -->
+            <div id="speechLayer" class="absolute inset-0 pointer-events-none z-[980]"></div>
+        </div>
+
+        <!-- トースト通知バナー -->
+        <div id="discoveryBanner" class="hidden pointer-events-none fixed top-20 left-1/2 -translate-x-1/2 z-40 px-5 py-2 rounded-full bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 text-black font-black text-sm sm:text-xl border-4 border-white shadow-[0_6px_30px_rgba(0,0,0,0.75)] whitespace-nowrap"></div>
+
+        <!-- ズーム時のミニマップ（右下） -->
+        <div id="minimapBox" class="hidden absolute bottom-3 right-3 z-30 w-36 h-20 rounded-xl border-2 border-white/80 overflow-hidden shadow-2xl bg-black/80 pointer-events-none">
+            <img id="minimapImg" src="./assets/world_forest.webp" alt="" class="w-full h-full object-cover opacity-75">
+            <div id="minimapRect" class="absolute border-2 border-yellow-300 bg-yellow-300/20"></div>
+        </div>
+
+        <!-- 操作ガイドピル（左下） -->
+        <div class="absolute bottom-2.5 left-3 z-20 bg-black/70 border border-white/25 rounded-full px-3 py-1 text-[10px] sm:text-xs font-bold text-emerald-200 pointer-events-none">
+            👆 ゆびで スライドして さがそう！ どのポケモンを タッチしても なきごえが きけるよ♪
+        </div>
+    </main>
+
+    <!-- 2〜4人対戦モード用：「だれが みつけた？」ポップアップ -->
+    <div id="whoFoundModal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-4 border-yellow-300 rounded-3xl p-5 max-w-lg w-full text-center space-y-4 shadow-2xl">
+            <div class="inline-block bg-yellow-300 text-black font-black text-xs sm:text-sm px-4 py-1 rounded-full">🎉 ナイス はっけん！！</div>
+            <div class="flex items-center justify-center gap-3">
+                <img id="whoFoundImg" src="" alt="" class="w-20 h-20 object-contain drop-shadow-[0_0_12px_rgba(250,204,21,0.9)]">
+                <div class="text-left">
+                    <div id="whoFoundName" class="text-2xl sm:text-3xl font-black text-yellow-300 text-outline">ピカチュウ</div>
+                    <div class="text-sm sm:text-base font-bold text-white">だれが みつけたかな？ タッチしてね！</div>
+                </div>
+            </div>
+            <div id="whoFoundButtons" class="grid grid-cols-2 gap-3 pt-1"></div>
+        </div>
+    </div>
+
+    <!-- 🏆 パーフェクト発見クリアモーダル -->
+    <div id="clearModal" class="hidden fixed inset-0 z-50 bg-black/88 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="manga-burst fixed inset-0 pointer-events-none"></div>
+        <div class="relative z-10 max-w-2xl w-full bg-gradient-to-b from-yellow-300 via-lime-400 to-emerald-600 p-1.5 rounded-3xl shadow-[0_0_70px_rgba(52,211,153,0.95)]">
+            <div class="bg-slate-950 rounded-[22px] p-5 sm:p-7 text-center space-y-4">
+                <div class="inline-block bg-yellow-300 text-black font-black text-xs sm:text-base px-5 py-1 rounded-full animate-bounce">
+                    🎊 ぜんいん はっけん！ たんけん だいせいこう！！ 🎊
+                </div>
+                <h2 id="clearHeadline" class="text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-lime-300 to-emerald-400">
+                    🏆 ポケモン さがし マスター！！
+                </h2>
+                <div id="clearStatsRow" class="flex items-center justify-center gap-3 flex-wrap text-sm sm:text-lg font-black"></div>
+                <div id="clearFoundGallery" class="flex items-center justify-center gap-2 flex-wrap bg-slate-900/90 border border-emerald-400/40 rounded-2xl p-3"></div>
+                <div id="clearBattleRanking" class="hidden grid-cols-2 sm:grid-cols-4 gap-2 pt-1"></div>
+                <div class="flex items-center justify-center gap-3 pt-2 flex-wrap">
+                    <button onclick="replaySameSettings()" class="px-6 py-3 rounded-2xl font-black text-sm sm:text-lg bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-400 text-black border-3 border-white shadow-xl active:scale-95">
+                        🔄 あたらしい かくれかたで もういちど！
+                    </button>
+                    <button onclick="returnToSetup()" class="px-6 py-3 rounded-2xl font-black text-sm sm:text-lg bg-gradient-to-r from-emerald-400 to-teal-500 text-black border-2 border-white shadow-lg active:scale-95">
+                        🌍 べつの ワールドを えらぶ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/data/pokemon_db.js"></script>
+    <script>
+        /* ==========================================================
+           1. 4つの大パノラマワールド ＆ 難易度設定
+        ========================================================== */
+        const WORLDS = [
+            {
+                id: 'forest',
+                name: '🌳 ピクニックの もり',
+                desc: 'ツリーハウスや かわの はしに かくれているよ！',
+                bg: './assets/world_forest.webp',
+                favTargets: [25, 133, 906, 722, 151, 143, 1, 778, 172, 1017]
+            },
+            {
+                id: 'beach',
+                name: '🏖️ トロピカル ビーチ',
+                desc: 'パラソルや サンゴしょうを さがしてみよう！',
+                bg: './assets/world_beach.webp',
+                favTargets: [393, 131, 7, 912, 54, 134, 728, 249, 245, 658]
+            },
+            {
+                id: 'carnival',
+                name: '🎡 ナイト カーニバル',
+                desc: 'かんらんしゃや やたいの テントに ぎっしり！',
+                bg: './assets/world_carnival.webp',
+                favTargets: [94, 700, 197, 39, 132, 815, 959, 448, 385, 835]
+            },
+            {
+                id: 'temple',
+                name: '🏰 てんくうの しんでん',
+                desc: 'にじの はしに でんせつの ポケモンたちが しゅうごう！',
+                bg: './assets/world_temple.webp',
+                favTargets: [384, 150, 6, 493, 250, 1007, 1008, 888, 1024, 445]
+            }
+        ];
+
+        const DIFFICULTIES = {
+            easy:   { id: 'easy',   label: '🌱 かんたん',   sub: '48ひき・おだい3びき', totalCount: 48,  targetCount: 3, shinyCount: 0, spriteScale: 1.22 },
+            normal: { id: 'normal', label: '⚡ ふつう',     sub: '92ひき・おだい5＋✨1', totalCount: 92,  targetCount: 5, shinyCount: 1, spriteScale: 1.0  },
+            hard:   { id: 'hard',   label: '👑 マスター',   sub: '145ひき・おだい7＋✨2', totalCount: 145, targetCount: 7, shinyCount: 2, spriteScale: 0.84 }
+        };
+
+        const PLAYER_BADGES = [
+            { id: 0, label: '1P ピカチュウ', color: '#eab308', avatar: '../assets/cards/leader_pikachu.webp' },
+            { id: 1, label: '2P イーブイ',   color: '#ec4899', avatar: '../assets/cards/leader_eevee.webp' },
+            { id: 2, label: '3P ポッチャマ', color: '#0ea5e9', avatar: '../assets/cards/leader_piplup.webp' },
+            { id: 3, label: '4P リザードン', color: '#ea580c', avatar: '../assets/cards/leader_charizard.webp' }
+        ];
+
+        // 色・形が似た「そっくりデコイ」マップ（ウォーリーをさがせ！ならではの楽しい迷彩！）
+        const SIMILAR_DECOYS = {
+            25:  [172, 26, 702, 921, 835, 311, 312, 778, 54],
+            133: [136, 37, 58, 725, 653, 926],
+            393: [7, 816, 183, 194, 501, 912],
+            906: [1, 722, 252, 152, 251, 492],
+            6:   [4, 149, 250, 909, 136],
+            151: [39, 35, 113, 700, 196],
+            94:  [491, 487, 571, 937]
+        };
+
+        const ALL_SPECIES = window.POKEMON_ALL_CROWD || [];
+        const SHINY_POOL = window.POKEMON_SHINY_BONUS || [];
+
+        const state = {
+            soundOn: true,
+            audioManifest: null,
+            worldId: 'forest',
+            diffId: 'normal',
+            playerMode: 1, // 1 = みんなで協力, 2..4 = 対戦人数
+            zoom: 1.0,
+            panX: 0,
+            panY: 0,
+            baseFitScale: 1.0,
+            targets: [],       // [{ uid, dexId, name, spriteImg, crySrc, bingoId, found, isShiny }]
+            placedItems: [],   // 全配置スプライト
+            playerScores: [0, 0, 0, 0],
+            pendingFoundItem: null,
+            elapsedSec: 0,
+            timerId: null,
+            hintTimeout: null,
+            isCleared: false
+        };
+
+        /* ==========================================================
+           2. 音声 ＆ Web Audio 効果音
+        ========================================================== */
+        const voiceEl = document.getElementById('voiceAudio');
+        let audioCtx = null;
+        let unlocked = false;
+
+        async function loadManifest() {
+            try {
+                const res = await fetch('../assets/audio/manifest.json?v=' + Date.now());
+                if (res.ok) state.audioManifest = await res.json();
+            } catch (_) {}
+        }
+
+        function unlockAudio() {
+            if (unlocked) return;
+            unlocked = true;
+            if (!audioCtx) {
+                const AC = window.AudioContext || window.webkitAudioContext;
+                if (AC) audioCtx = new AC();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }
+        window.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
+
+        function toggleMute() {
+            unlockAudio();
+            state.soundOn = !state.soundOn;
+            if (!state.soundOn) voiceEl.pause();
+            document.querySelectorAll('.mute-btn').forEach(b => {
+                b.innerHTML = state.soundOn
+                    ? (b.textContent.includes('おと') ? '<span>🔊</span><span>おと オン</span>' : '🔊')
+                    : (b.textContent.includes('おと') ? '<span>🔇</span><span>おと オフ</span>' : '🔇');
+            });
+        }
+
+        function playCryOrVoice(item, fullVoice = false) {
+            if (!state.soundOn) return;
+            if (fullVoice && item.bingoId) {
+                const m = state.audioManifest?.summon?.[String(item.bingoId)];
+                if (m) {
+                    voiceEl.src = `../${m.src}`;
+                    const s = m.splitSec || 0;
+                    const playFrom = () => {
+                        try { voiceEl.currentTime = s; } catch (_) {}
+                        voiceEl.play().catch(() => {});
+                    };
+                    if (s > 0.05) {
+                        voiceEl.addEventListener('loadedmetadata', playFrom, { once: true });
+                        voiceEl.load();
+                    } else {
+                        playFrom();
+                    }
+                    return;
+                }
+            }
+            voiceEl.src = `../${item.crySrc}`;
+            voiceEl.currentTime = 0;
+            voiceEl.play().catch(() => {});
+        }
+
+        function playSysClip(key) {
+            if (!state.soundOn) return;
+            const src = state.audioManifest?.sys?.[key]?.src ? `../${state.audioManifest.sys[key].src}` : `../assets/audio/sys/${key}.mp3`;
+            voiceEl.src = src;
+            voiceEl.currentTime = 0;
+            voiceEl.play().catch(() => {});
+        }
+
+        function playChime(type = 'find') {
+            if (!state.soundOn) return;
+            unlockAudio();
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const freqs = type === 'shiny'
+                ? [587.3, 784.0, 987.8, 1174.7, 1568.0]
+                : (type === 'find' ? [523.25, 659.25, 783.99, 1046.5] : [420, 540]);
+            freqs.forEach((f, i) => {
+                const osc = audioCtx.createOscillator();
+                const g = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(f, now + i * 0.06);
+                g.gain.setValueAtTime(0.22, now + i * 0.06);
+                g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.2);
+                osc.connect(g); g.connect(audioCtx.destination);
+                osc.start(now + i * 0.06); osc.stop(now + i * 0.06 + 0.22);
+            });
+        }
+
+        /* ==========================================================
+           3. セットアップ画面レンダリング
+        ========================================================== */
+        function renderSetupUI() {
+            const wGrid = document.getElementById('worldSelectGrid');
+            wGrid.innerHTML = WORLDS.map(w => {
+                const active = state.worldId === w.id;
+                return `
+                    <button onclick="selectWorld('${w.id}')" class="rounded-2xl overflow-hidden border-4 transition text-left bg-slate-900 active:scale-95 ${
+                        active ? 'border-yellow-300 scale-[1.02] shadow-[0_0_24px_rgba(250,204,21,0.85)]' : 'border-slate-700 hover:border-emerald-400'
+                    }">
+                        <div class="relative aspect-video w-full overflow-hidden">
+                            <img src="${w.bg}" alt="${w.name}" class="w-full h-full object-cover">
+                            ${active ? '<span class="absolute top-1.5 right-1.5 bg-yellow-300 text-black text-[10px] font-black px-2 py-0.5 rounded-full shadow">✨えらんでるよ</span>' : ''}
+                        </div>
+                        <div class="p-2">
+                            <div class="text-xs sm:text-sm font-black text-white">${w.name}</div>
+                            <div class="text-[10px] text-slate-300 font-bold mt-0.5 line-clamp-1">${w.desc}</div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+
+            const dGrid = document.getElementById('diffButtons');
+            dGrid.innerHTML = Object.values(DIFFICULTIES).map(d => {
+                const active = state.diffId === d.id;
+                return `
+                    <button onclick="selectDiff('${d.id}')" class="py-2 px-2 rounded-xl border-2 transition active:scale-95 text-center ${
+                        active ? 'bg-gradient-to-b from-lime-300 to-emerald-400 text-black border-white font-black shadow-lg' : 'bg-slate-800 text-slate-200 border-slate-600 font-bold'
+                    }">
+                        <div class="text-xs sm:text-sm font-black">${d.label}</div>
+                        <div class="text-[9px] sm:text-[10px] opacity-90">${d.sub}</div>
+                    </button>
+                `;
+            }).join('');
+
+            const mGrid = document.getElementById('modeButtons');
+            const modes = [
+                { n: 1, lbl: '🤝 みんなで', sub: 'きょうりょく' },
+                { n: 2, lbl: '⚔️ 2にん',    sub: 'たいせん' },
+                { n: 3, lbl: '⚔️ 3にん',    sub: 'たいせん' },
+                { n: 4, lbl: '⚔️ 4にん',    sub: 'たいせん' }
+            ];
+            mGrid.innerHTML = modes.map(m => {
+                const active = state.playerMode === m.n;
+                return `
+                    <button onclick="selectMode(${m.n})" class="py-2 px-1.5 rounded-xl border-2 transition active:scale-95 text-center ${
+                        active ? 'bg-gradient-to-b from-cyan-300 to-sky-400 text-black border-white font-black shadow-lg' : 'bg-slate-800 text-slate-200 border-slate-600 font-bold'
+                    }">
+                        <div class="text-xs sm:text-sm font-black">${m.lbl}</div>
+                        <div class="text-[9px] sm:text-[10px] opacity-90">${m.sub}</div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectWorld(id) { playChime('tap'); state.worldId = id; renderSetupUI(); }
+        function selectDiff(id)  { playChime('tap'); state.diffId = id; renderSetupUI(); }
+        function selectMode(n)   { playChime('tap'); state.playerMode = n; renderSetupUI(); }
+
+        /* ==========================================================
+           4. パノラマ群衆生成アルゴリズム（お題ユニーク保証＋そっくり迷彩配置）
+        ========================================================== */
+        function shuffle(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function startPanoramaGame() {
+            unlockAudio();
+            document.getElementById('setupOverlay').classList.add('hidden');
+            document.getElementById('clearModal').classList.add('hidden');
+
+            const world = WORLDS.find(w => w.id === state.worldId) || WORLDS[0];
+            const diff = DIFFICULTIES[state.diffId] || DIFFICULTIES.normal;
+
+            document.getElementById('worldBgImg').src = world.bg;
+            document.getElementById('minimapImg').src = world.bg;
+
+            state.playerScores = [0, 0, 0, 0];
+            state.isCleared = false;
+            state.elapsedSec = 0;
+            if (state.timerId) clearInterval(state.timerId);
+            state.timerId = setInterval(() => {
+                if (!state.isCleared) {
+                    state.elapsedSec++;
+                    const mm = String(Math.floor(state.elapsedSec / 60)).padStart(2, '0');
+                    const ss = String(state.elapsedSec % 60).padStart(2, '0');
+                    document.getElementById('timerLabel').textContent = `${mm}:${ss}`;
+                }
+            }, 1000);
+            document.getElementById('timerLabel').textContent = '00:00';
+
+            buildCrowdScene(world, diff);
+            resetViewportToFit();
+            renderTargetsBar();
+            renderBattleScoreBar();
+            playSysClip('sagase_start');
+        }
+
+        function replaySameSettings() {
+            startPanoramaGame();
+        }
+
+        function returnToSetup() {
+            if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+            document.getElementById('clearModal').classList.add('hidden');
+            document.getElementById('setupOverlay').classList.remove('hidden');
+            renderSetupUI();
+        }
+
+        function buildCrowdScene(world, diff) {
+            // 1. おだいのポケモンを選ぶ（ワールドおすすめ＋全体人気からランダム選出）
+            const favPool = shuffle(world.favTargets)
+                .map(dex => ALL_SPECIES.find(s => s.dexId === dex))
+                .filter(Boolean);
+            const otherMain = shuffle(ALL_SPECIES.filter(s => s.isMain && !world.favTargets.includes(s.dexId)));
+            const chosenTargets = [...favPool.slice(0, Math.ceil(diff.targetCount * 0.7)), ...otherMain]
+                .slice(0, diff.targetCount);
+
+            const targetDexSet = new Set(chosenTargets.map(t => t.dexId));
+
+            // 2. 色ちがいボーナス選出（通常おだいと被らない種族から）
+            const chosenShinies = shuffle(SHINY_POOL.filter(sh => !targetDexSet.has(sh.dexId))).slice(0, diff.shinyCount);
+            chosenShinies.forEach(sh => targetDexSet.add(sh.dexId));
+
+            // 3. ステージ上の均等ジッターグリッド座標生成 (1920 x 1080, 端マージン確保)
+            const total = diff.totalCount;
+            const aspect = 1920 / 1080;
+            const cols = Math.ceil(Math.sqrt(total * aspect));
+            const rows = Math.ceil(total / cols);
+            const marginX = 85;
+            const marginYTop = 85;
+            const marginYBot = 80;
+            const usableW = 1920 - marginX * 2;
+            const usableH = 1080 - marginYTop - marginYBot;
+            const cellW = usableW / cols;
+            const cellH = usableH / rows;
+
+            const allSlots = [];
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const cx = marginX + (c + 0.18 + Math.random() * 0.64) * cellW;
+                    const cy = marginYTop + (r + 0.18 + Math.random() * 0.64) * cellH;
+                    allSlots.push({ x: cx, y: cy, r, c });
+                }
+            }
+            const pickedSlots = shuffle(allSlots).slice(0, total);
+
+            // おだいポケモン同士が近すぎないスロットに割り当て
+            const specialCount = chosenTargets.length + chosenShinies.length;
+            const specialSlots = [];
+            const restSlots = [];
+
+            for (const sl of pickedSlots) {
+                if (specialSlots.length < specialCount) {
+                    const tooClose = specialSlots.some(s2 => Math.hypot(s2.x - sl.x, s2.y - sl.y) < 220);
+                    if (!tooClose) specialSlots.push(sl);
+                    else restSlots.push(sl);
+                } else {
+                    restSlots.push(sl);
+                }
+            }
+            while (specialSlots.length < specialCount && restSlots.length > 0) {
+                specialSlots.push(restSlots.shift());
+            }
+
+            const nonTargetPool = ALL_SPECIES.filter(s => !targetDexSet.has(s.dexId));
+            const placed = [];
+            state.targets = [];
+
+            // 通常おだい配置
+            chosenTargets.forEach((sp, idx) => {
+                const sl = specialSlots[idx];
+                const uid = `target_${idx}`;
+                const tObj = {
+                    uid,
+                    dexId: sp.dexId,
+                    name: sp.name,
+                    spriteImg: sp.spriteImg,
+                    crySrc: sp.crySrc,
+                    bingoId: sp.bingoId,
+                    isTarget: true,
+                    isShiny: false,
+                    found: false,
+                    x: sl.x,
+                    y: sl.y,
+                    flip: Math.random() < 0.45,
+                    rot: (Math.random() - 0.5) * 12
+                };
+                state.targets.push(tObj);
+                placed.push(tObj);
+            });
+
+            // 色ちがいボーナス配置
+            chosenShinies.forEach((sh, idx) => {
+                const sl = specialSlots[chosenTargets.length + idx];
+                const uid = `shiny_${idx}`;
+                const sObj = {
+                    uid,
+                    dexId: sh.dexId,
+                    name: `✨${sh.name}`,
+                    spriteImg: sh.spriteImg,
+                    crySrc: sh.crySrc,
+                    bingoId: null,
+                    isTarget: true,
+                    isShiny: true,
+                    found: false,
+                    x: sl.x,
+                    y: sl.y,
+                    flip: Math.random() < 0.5,
+                    rot: (Math.random() - 0.5) * 14
+                };
+                state.targets.push(sObj);
+                placed.push(sObj);
+            });
+
+            // そっくりデコイを優先的にターゲット近くに混ぜつつ残りの群衆を配置！
+            const decoyDexQueue = [];
+            chosenTargets.forEach(t => {
+                const decs = SIMILAR_DECOYS[t.dexId] || [];
+                decs.forEach(d => {
+                    if (!targetDexSet.has(d)) decoyDexQueue.push(d);
+                });
+            });
+
+            const shuffledCrowd = shuffle(nonTargetPool);
+            restSlots.forEach((sl, i) => {
+                let sp = null;
+                if (i < decoyDexQueue.length) {
+                    sp = nonTargetPool.find(p => p.dexId === decoyDexQueue[i]);
+                }
+                if (!sp) {
+                    sp = shuffledCrowd[i % shuffledCrowd.length];
+                }
+                placed.push({
+                    uid: `crowd_${i}`,
+                    dexId: sp.dexId,
+                    name: sp.name,
+                    spriteImg: sp.spriteImg,
+                    crySrc: sp.crySrc,
+                    bingoId: sp.bingoId,
+                    isTarget: false,
+                    isShiny: false,
+                    found: false,
+                    x: sl.x,
+                    y: sl.y,
+                    flip: Math.random() < 0.5,
+                    rot: (Math.random() - 0.5) * 16
+                });
+            });
+
+            state.placedItems = placed;
+            renderCrowdDOM(diff.spriteScale);
+        }
+
+        function renderCrowdDOM(scaleMult) {
+            const layer = document.getElementById('crowdLayer');
+            const basePx = Math.round(86 * scaleMult);
+
+            // Y座標順で自然な前後重なり順にしつつ、お題ポケモンが完全に隠れないよう微調整
+            layer.innerHTML = state.placedItems.map((item, idx) => {
+                const depthScale = 0.88 + (item.y / 1080) * 0.26;
+                const size = Math.round(basePx * depthScale);
+                const z = Math.round(item.y) + (item.isTarget ? 18 : 0);
+                const flipStr = item.flip ? 'scaleX(-1)' : 'scaleX(1)';
+                const shinyCls = item.isShiny ? 'shiny-glint' : '';
+
+                return `
+                    <div id="poke-node-${item.uid}"
+                         data-uid="${item.uid}"
+                         style="left:${Math.round(item.x - size / 2)}px; top:${Math.round(item.y - size / 2)}px; width:${size}px; height:${size}px; z-index:${z};"
+                         class="poke-sprite-btn absolute cursor-pointer select-none flex items-center justify-center">
+                        <div class="w-full h-full poke-bob ${shinyCls}" style="animation-delay:${(idx % 10) * 0.25}s;">
+                            <img src="../${item.spriteImg}" alt="${item.name}" draggable="false"
+                                 style="transform: ${flipStr} rotate(${item.rot.toFixed(1)}deg);"
+                                 class="w-full h-full object-contain drop-shadow-[0_3px_5px_rgba(0,0,0,0.7)] pointer-events-none">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* ==========================================================
+           5. おだいバー ＆ バトルスコアバー描画
+        ========================================================== */
+        function renderTargetsBar() {
+            const bar = document.getElementById('targetsBar');
+            bar.innerHTML = state.targets.map(t => {
+                const cardCls = t.found
+                    ? 'bg-emerald-900/90 border-lime-300 opacity-80'
+                    : (t.isShiny
+                        ? 'bg-gradient-to-b from-purple-800 to-amber-700 border-yellow-300 shadow-[0_0_12px_rgba(253,224,71,0.75)]'
+                        : 'bg-slate-900 border-yellow-400/85 hover:border-white');
+                return `
+                    <button onclick="previewTargetCry('${t.uid}')" class="relative flex items-center gap-1.5 px-2 py-1 rounded-xl border-2 shrink-0 transition active:scale-95 ${cardCls}">
+                        <img src="../${t.spriteImg}" alt="${t.name}" class="w-8 h-8 sm:w-9 sm:h-9 object-contain">
+                        <div class="text-left leading-tight">
+                            <div class="text-[10px] sm:text-xs font-black ${t.isShiny ? 'text-yellow-200' : 'text-white'}">${t.name}</div>
+                            <div class="text-[9px] font-black ${t.found ? 'text-lime-300' : 'text-amber-300'}">
+                                ${t.found ? '✅ みつけた！' : '🔍 さがそう！'}
+                            </div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function previewTargetCry(uid) {
+            const t = state.targets.find(x => x.uid === uid);
+            if (t) playCryOrVoice(t, false);
+        }
+
+        function renderBattleScoreBar() {
+            const bar = document.getElementById('battleScoreBar');
+            if (state.playerMode <= 1) {
+                bar.classList.add('hidden');
+                bar.classList.remove('flex');
+                return;
+            }
+            bar.classList.remove('hidden');
+            bar.classList.add('flex');
+            bar.innerHTML = PLAYER_BADGES.slice(0, state.playerMode).map((p, idx) => `
+                <div class="flex items-center gap-1.5 px-3 py-0.5 rounded-full border border-white/40 text-xs sm:text-sm font-black shadow" style="background:${p.color}dd;">
+                    <img src="${p.avatar}" alt="" class="w-5 h-5 rounded-full object-cover border border-white">
+                    <span>${p.label}：⭐×${state.playerScores[idx]}</span>
+                </div>
+            `).join('');
+        }
+
+        /* ==========================================================
+           6. スムーズ ドラッグ＆ピンチ＆ボタン ズームビューポート制御
+        ========================================================== */
+        const vp = document.getElementById('viewportContainer');
+        const stage = document.getElementById('panoramaStage');
+        let isDragging = false;
+        let dragStartX = 0, dragStartY = 0;
+        let panStartX = 0, panStartY = 0;
+        let movedDist = 0;
+        let downTargetUid = null;
+
+        function computeBaseFitScale() {
+            const vw = vp.clientWidth || window.innerWidth;
+            const vh = vp.clientHeight || (window.innerHeight - 70);
+            // 画面全体を隙間なく気持ちよく見渡せる基準スケール（coverとcontainの中間）
+            return Math.max(vw / 1920, vh / 1080);
+        }
+
+        function resetViewportToFit() {
+            state.baseFitScale = computeBaseFitScale();
+            state.zoom = 1.0;
+            const s = state.baseFitScale * state.zoom;
+            const vw = vp.clientWidth;
+            const vh = vp.clientHeight;
+            state.panX = (vw - 1920 * s) / 2;
+            state.panY = (vh - 1080 * s) / 2;
+            clampAndApplyTransform();
+            updateZoomBtnUI();
+        }
+
+        function clampAndApplyTransform() {
+            const vw = vp.clientWidth;
+            const vh = vp.clientHeight;
+            const s = state.baseFitScale * state.zoom;
+            const scaledW = 1920 * s;
+            const scaledH = 1080 * s;
+
+            if (scaledW <= vw) state.panX = (vw - scaledW) / 2;
+            else state.panX = Math.min(0, Math.max(vw - scaledW, state.panX));
+
+            if (scaledH <= vh) state.panY = (vh - scaledH) / 2;
+            else state.panY = Math.min(0, Math.max(vh - scaledH, state.panY));
+
+            stage.style.transform = `translate3d(${state.panX.toFixed(1)}px, ${state.panY.toFixed(1)}px, 0) scale(${s.toFixed(4)})`;
+
+            const mmBox = document.getElementById('minimapBox');
+            if (state.zoom > 1.12) {
+                mmBox.classList.remove('hidden');
+                const rx = Math.max(0, (-state.panX / scaledW) * 100);
+                const ry = Math.max(0, (-state.panY / scaledH) * 100);
+                const rw = Math.min(100, (vw / scaledW) * 100);
+                const rh = Math.min(100, (vh / scaledH) * 100);
+                const rect = document.getElementById('minimapRect');
+                rect.style.left = `${rx}%`;
+                rect.style.top = `${ry}%`;
+                rect.style.width = `${rw}%`;
+                rect.style.height = `${rh}%`;
+            } else {
+                mmBox.classList.add('hidden');
+            }
+        }
+
+        function setZoomCentered(newZoom, focusScreenX = null, focusScreenY = null) {
+            const vw = vp.clientWidth;
+            const vh = vp.clientHeight;
+            const fx = focusScreenX !== null ? focusScreenX : vw / 2;
+            const fy = focusScreenY !== null ? focusScreenY : vh / 2;
+
+            const oldS = state.baseFitScale * state.zoom;
+            const worldX = (fx - state.panX) / oldS;
+            const worldY = (fy - state.panY) / oldS;
+
+            state.zoom = Math.max(1.0, Math.min(3.0, newZoom));
+            const newS = state.baseFitScale * state.zoom;
+            state.panX = fx - worldX * newS;
+            state.panY = fy - worldY * newS;
+            clampAndApplyTransform();
+            updateZoomBtnUI();
+        }
+
+        function cycleZoomLevel() {
+            playChime('tap');
+            const next = state.zoom < 1.4 ? 1.8 : (state.zoom < 2.3 ? 2.6 : 1.0);
+            setZoomCentered(next);
+        }
+
+        function updateZoomBtnUI() {
+            document.getElementById('zoomBtnText').textContent = `${state.zoom.toFixed(1)}x`;
+        }
+
+        window.addEventListener('resize', () => {
+            state.baseFitScale = computeBaseFitScale();
+            clampAndApplyTransform();
+        });
+
+        // ポインタドラッグ ＆ タップ判定（パン操作とポケモンタップを完璧に両立！）
+        vp.addEventListener('pointerdown', (e) => {
+            unlockAudio();
+            isDragging = true;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            panStartX = state.panX;
+            panStartY = state.panY;
+            movedDist = 0;
+            const spNode = e.target.closest('.poke-sprite-btn');
+            downTargetUid = spNode ? spNode.getAttribute('data-uid') : null;
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+            movedDist = Math.hypot(dx, dy);
+            if (movedDist > 6) {
+                state.panX = panStartX + dx;
+                state.panY = panStartY + dy;
+                clampAndApplyTransform();
+            }
+        });
+
+        window.addEventListener('pointerup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            if (movedDist < 12 && downTargetUid) {
+                handlePokemonTapped(downTargetUid);
+            }
+            downTargetUid = null;
+        });
+
+        vp.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = vp.getBoundingClientRect();
+            const delta = e.deltaY < 0 ? 0.25 : -0.25;
+            setZoomCentered(state.zoom + delta, e.clientX - rect.left, e.clientY - rect.top);
+        }, { passive: false });
+
+        /* ==========================================================
+           7. ポケモンタップ判定・吹き出し・ロトムのヒントレーダー
+        ========================================================== */
+        function showSpeechBubble(x, y, text, isHighlight = false) {
+            const layer = document.getElementById('speechLayer');
+            const el = document.createElement('div');
+            el.style.left = `${Math.min(1760, Math.max(120, x))}px`;
+            el.style.top = `${Math.max(45, y - 56)}px`;
+            el.className = `absolute -translate-x-1/2 -translate-y-full px-3 py-1 rounded-2xl font-black text-sm sm:text-base whitespace-nowrap shadow-xl border-2 ${
+                isHighlight ? 'bg-yellow-300 text-black border-white scale-110' : 'bg-slate-900/95 text-white border-emerald-400'
+            }`;
+            el.textContent = text;
+            layer.appendChild(el);
+            setTimeout(() => el.remove(), 1500);
+        }
+
+        function showBanner(msg) {
+            const b = document.getElementById('discoveryBanner');
+            b.textContent = msg;
+            b.classList.remove('hidden');
+            clearTimeout(b._t);
+            b._t = setTimeout(() => b.classList.add('hidden'), 2200);
+        }
+
+        function handlePokemonTapped(uid) {
+            if (state.isCleared) return;
+            const item = state.placedItems.find(x => x.uid === uid);
+            if (!item) return;
+
+            const node = document.getElementById(`poke-node-${uid}`);
+
+            if (item.isTarget && !item.found) {
+                item.found = true;
+                document.getElementById('hintRadarRing').classList.add('hidden');
+
+                if (node) {
+                    node.classList.add('poke-found-anim');
+                    const badge = document.createElement('span');
+                    badge.className = 'absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-300 text-black text-[11px] font-black px-2 py-0.2 rounded-full border-2 border-black shadow-lg whitespace-nowrap';
+                    badge.textContent = item.isShiny ? '🌈いろちがいGET!' : '🎉みつけた!';
+                    node.appendChild(badge);
+                }
+
+                playChime(item.isShiny ? 'shiny' : 'find');
+                playCryOrVoice(item, true);
+                spawnConfetti(item.isShiny ? 75 : 45);
+                showSpeechBubble(item.x, item.y, `🎉 ${item.name} ゲットだぜ！！`, true);
+                renderTargetsBar();
+
+                if (state.playerMode > 1) {
+                    openWhoFoundPopup(item);
+                } else {
+                    showBanner(item.isShiny ? `🌈 ミラクル！！ ${item.name} を みつけたぞ！！` : `🎉 やったー！！ 『${item.name}』を みつけたよ！！`);
+                    checkStageClear();
+                }
+            } else if (item.isTarget && item.found) {
+                playCryOrVoice(item, false);
+                showSpeechBubble(item.x, item.y, `✨ もう みつけた ${item.name} だよ♪`, true);
+            } else {
+                // 群衆のポケモンをタッチしたときも本物の鳴き声＆名前吹き出し！
+                if (node) {
+                    node.classList.remove('poke-wiggle');
+                    void node.offsetWidth;
+                    node.classList.add('poke-wiggle');
+                }
+                playCryOrVoice(item, false);
+                showSpeechBubble(item.x, item.y, `♪ ぼくは『${item.name}』だよ！`);
+            }
+        }
+
+        function openWhoFoundPopup(item) {
+            state.pendingFoundItem = item;
+            document.getElementById('whoFoundImg').src = `../${item.spriteImg}`;
+            document.getElementById('whoFoundName').textContent = item.name;
+            const btns = document.getElementById('whoFoundButtons');
+            btns.innerHTML = PLAYER_BADGES.slice(0, state.playerMode).map((p, idx) => `
+                <button onclick="awardFindToPlayer(${idx})" class="py-3 px-3 rounded-2xl border-3 border-white font-black text-sm sm:text-lg text-white shadow-lg active:scale-95 flex items-center justify-center gap-2" style="background:${p.color};">
+                    <img src="${p.avatar}" alt="" class="w-8 h-8 rounded-full object-cover border border-white">
+                    <span>${p.label}！</span>
+                </button>
+            `).join('');
+            document.getElementById('whoFoundModal').classList.remove('hidden');
+        }
+
+        function awardFindToPlayer(pIdx) {
+            const pts = state.pendingFoundItem?.isShiny ? 2 : 1;
+            state.playerScores[pIdx] += pts;
+            document.getElementById('whoFoundModal').classList.add('hidden');
+            playChime('find');
+            renderBattleScoreBar();
+            checkStageClear();
+        }
+
+        function triggerRotomHint() {
+            const unfound = state.targets.filter(t => !t.found);
+            if (unfound.length === 0) return;
+            const target = unfound[0];
+
+            playChime('tap');
+            playCryOrVoice(target, false);
+
+            // 1.8xにズームしつつターゲット付近へスムーズパン
+            state.zoom = Math.max(state.zoom, 1.8);
+            const s = state.baseFitScale * state.zoom;
+            const vw = vp.clientWidth;
+            const vh = vp.clientHeight;
+            // 少しだけランダムオフセットをつけて「探す楽しさ」も残す！
+            const jitterX = (Math.random() - 0.5) * 70;
+            const jitterY = (Math.random() - 0.5) * 70;
+            const rx = Math.min(1800, Math.max(120, target.x + jitterX));
+            const ry = Math.min(960, Math.max(120, target.y + jitterY));
+
+            state.panX = vw / 2 - rx * s;
+            state.panY = vh / 2 - ry * s;
+            clampAndApplyTransform();
+            updateZoomBtnUI();
+
+            const ring = document.getElementById('hintRadarRing');
+            ring.style.left = `${rx}px`;
+            ring.style.top = `${ry}px`;
+            ring.classList.remove('hidden');
+
+            showBanner(`💡 ロトムヒント：きいろい わっかの なかに『${target.name}』が いるロト！`);
+            clearTimeout(state.hintTimeout);
+            state.hintTimeout = setTimeout(() => ring.classList.add('hidden'), 4500);
+        }
+
+        function checkStageClear() {
+            if (state.targets.every(t => t.found)) {
+                state.isCleared = true;
+                if (state.timerId) { clearInterval(state.timerId); state.timerId = null; }
+                setTimeout(() => showStageClearModal(), 700);
+            }
+        }
+
+        function showStageClearModal() {
+            spawnConfetti(130);
+            playSysClip('sagase_clear');
+
+            const mm = String(Math.floor(state.elapsedSec / 60)).padStart(2, '0');
+            const ss = String(state.elapsedSec % 60).padStart(2, '0');
+            const stars = state.elapsedSec <= 60 ? '⭐⭐⭐ ちょうはやい！' : (state.elapsedSec <= 120 ? '⭐⭐ ナイスたんけん！' : '⭐ クリアおめでとう！');
+
+            document.getElementById('clearStatsRow').innerHTML = `
+                <span class="bg-emerald-900 border border-emerald-400 text-emerald-200 px-4 py-1 rounded-full">⏱️ タイム：${mm}:${ss}</span>
+                <span class="bg-amber-500 text-black px-4 py-1 rounded-full">${stars}</span>
+            `;
+
+            document.getElementById('clearFoundGallery').innerHTML = state.targets.map(t => `
+                <button onclick="previewTargetCry('${t.uid}')" class="flex flex-col items-center bg-slate-800 border border-yellow-400/60 rounded-2xl p-2 w-20 active:scale-95">
+                    <img src="../${t.spriteImg}" alt="${t.name}" class="w-12 h-12 object-contain">
+                    <span class="text-[10px] font-black text-white truncate w-full text-center mt-0.5">${t.name}</span>
+                </button>
+            `).join('');
+
+            const rankEl = document.getElementById('clearBattleRanking');
+            if (state.playerMode > 1) {
+                rankEl.classList.remove('hidden');
+                rankEl.classList.add('grid');
+                const sorted = PLAYER_BADGES.slice(0, state.playerMode)
+                    .map((p, i) => ({ ...p, score: state.playerScores[i] }))
+                    .sort((a, b) => b.score - a.score);
+                rankEl.innerHTML = sorted.map((p, rankIdx) => `
+                    <div class="rounded-2xl p-2 border-2 ${rankIdx === 0 ? 'border-yellow-300 bg-amber-950/70' : 'border-slate-700 bg-slate-900'} flex flex-col items-center">
+                        <span class="text-xs font-black text-yellow-300">${rankIdx === 0 ? '👑 1い' : `${rankIdx + 1}い`}</span>
+                        <img src="${p.avatar}" class="w-10 h-10 rounded-full object-cover border border-white my-1">
+                        <span class="text-xs font-black text-white">${p.label}</span>
+                        <span class="text-sm font-black text-amber-300">⭐×${p.score}</span>
+                    </div>
+                `).join('');
+            } else {
+                rankEl.classList.add('hidden');
+                rankEl.classList.remove('grid');
+            }
+
+            document.getElementById('clearModal').classList.remove('hidden');
+        }
+
+        /* ==========================================================
+           8. 紙吹雪エフェクト
+        ========================================================== */
+        const fxCanvas = document.getElementById('fxCanvas');
+        const fxCtx = fxCanvas.getContext('2d');
+        let confetti = [];
+
+        function resizeFx() {
+            fxCanvas.width = window.innerWidth;
+            fxCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeFx);
+
+        function spawnConfetti(count = 40) {
+            const colors = ['#fde047', '#34d399', '#38bdf8', '#f472b6', '#fb923c'];
+            for (let i = 0; i < count; i++) {
+                confetti.push({
+                    x: window.innerWidth * (0.2 + Math.random() * 0.6),
+                    y: window.innerHeight * (0.2 + Math.random() * 0.35),
+                    vx: (Math.random() - 0.5) * 11,
+                    vy: -Math.random() * 9 - 2,
+                    size: Math.random() * 8 + 5,
+                    rot: Math.random() * Math.PI * 2,
+                    vrot: (Math.random() - 0.5) * 0.25,
+                    alpha: 1,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+        }
+
+        function animateFx() {
+            fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+            for (let i = confetti.length - 1; i >= 0; i--) {
+                const c = confetti[i];
+                c.x += c.vx; c.y += c.vy; c.vy += 0.22; c.rot += c.vrot; c.alpha -= 0.013;
+                if (c.alpha <= 0 || c.y > fxCanvas.height + 30) { confetti.splice(i, 1); continue; }
+                fxCtx.save();
+                fxCtx.globalAlpha = c.alpha;
+                fxCtx.translate(c.x, c.y);
+                fxCtx.rotate(c.rot);
+                fxCtx.fillStyle = c.color;
+                fxCtx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size * 0.65);
+                fxCtx.restore();
+            }
+            requestAnimationFrame(animateFx);
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            resizeFx();
+            renderSetupUI();
+            animateFx();
+            await loadManifest();
+        });
+    </script>
+</body>
+</html>
