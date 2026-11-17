@@ -122,9 +122,14 @@
             <div class="inline-flex items-center gap-2 bg-gradient-to-r from-pink-300 via-fuchsia-400 to-amber-300 text-black font-black text-xs sm:text-sm px-4 py-1 rounded-full border-2 border-white shadow">
                 <span>🃏 キラキラ ポケモンカード ゲーム</span>
             </div>
-            <button onclick="toggleMute()" class="mute-btn px-3 py-1.5 rounded-2xl bg-fuchsia-900/90 border-2 border-pink-400 text-pink-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
-                <span>🔊</span><span>おと オン</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleGameFullscreen()" data-fs-mode="kana" class="fs-toggle-btn px-3 py-1.5 rounded-2xl bg-sky-900/95 border-2 border-sky-300 text-sky-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
+                    <span>⛶</span><span>ぜんがめん</span>
+                </button>
+                <button onclick="toggleMute()" class="mute-btn px-3 py-1.5 rounded-2xl bg-fuchsia-900/90 border-2 border-pink-400 text-pink-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
+                    <span>🔊</span><span>おと オン</span>
+                </button>
+            </div>
         </div>
 
         <div class="relative z-10 w-full max-w-5xl mx-auto text-center my-1">
@@ -193,6 +198,7 @@
                 <span>✨</span><span>ロトムスキャン</span><span id="scanLeftBadge" class="bg-black/80 text-yellow-300 text-[10px] px-1.5 rounded-full">2</span>
             </button>
             <button onclick="toggleMute()" class="mute-btn w-8 h-8 rounded-xl bg-fuchsia-900 border border-pink-400 flex items-center justify-center text-sm active:scale-95">🔊</button>
+            <button onclick="toggleGameFullscreen()" data-fs-mode="icon" class="fs-toggle-btn w-8 h-8 rounded-xl bg-sky-900 hover:bg-sky-800 border border-sky-300 text-sky-100 flex items-center justify-center text-sm font-black active:scale-95" title="ぜんがめん">⛶</button>
         </div>
     </header>
 
@@ -242,6 +248,7 @@
         </div>
     </div>
 
+    <script src="../assets/js/fullscreen.js"></script>
     <script src="../assets/data/pokemon_db.js"></script>
     <script>
         /* ==========================================================

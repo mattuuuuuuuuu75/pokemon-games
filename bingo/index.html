@@ -185,8 +185,13 @@
                 <span class="hidden sm:inline">図鑑</span><span>(<span id="headerDrawnCount">0</span>/75)</span>
             </button>
 
-            <button onclick="openResetModal()" class="px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-red-950 hover:bg-red-900 border border-red-500 text-red-200 flex items-center gap-1 shadow active:scale-95 transition">
+            <button onclick="openResetModal()" class="px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-red-950 hover:bg-red-900 border border-red-500 text-red-200 flex items-center gap-1 shadow active:scale-95 transition" title="リセット">
                 <span>🔄</span>
+            </button>
+
+            <button onclick="toggleGameFullscreen()" data-fs-mode="normal" class="fs-toggle-btn px-2 py-1 rounded-lg font-bold text-[10px] sm:text-xs bg-sky-900 hover:bg-sky-800 border border-sky-300 text-sky-100 flex items-center gap-1 shadow active:scale-95 transition" title="全画面表示の切り替え (Fキー)">
+                <span>⛶</span>
+                <span class="hidden sm:inline">全画面</span>
             </button>
         </div>
     </header>
@@ -416,6 +421,7 @@
         </div>
     </div>
 
+    <script src="../assets/js/fullscreen.js"></script>
     <script src="../assets/data/pokemon_db.js"></script>
     <script>
         /* ==========================================================

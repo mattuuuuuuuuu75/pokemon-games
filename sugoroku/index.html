@@ -132,13 +132,18 @@
 
         <!-- ステップ1：なんにんで あそぶ？ -->
         <div id="setupStep1" class="relative z-10 w-full h-full max-w-5xl mx-auto flex flex-col items-center justify-between py-1 sm:py-3">
-            <div class="w-full flex items-center justify-between">
+            <div class="w-full flex items-center justify-between gap-2">
                 <a href="../index.html" class="px-3 py-1.5 rounded-2xl bg-slate-800/90 border-2 border-yellow-400 text-yellow-200 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
                     <span>🏠</span><span>ゲーム いちらんへ</span>
                 </a>
-                <button onclick="toggleSoundMute()" class="sound-toggle-btn px-3 py-1.5 rounded-2xl bg-amber-900/90 border-2 border-yellow-400 text-yellow-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
-                    <span>🔊</span><span>おと オン</span>
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleGameFullscreen()" data-fs-mode="kana" class="fs-toggle-btn px-3 py-1.5 rounded-2xl bg-sky-900/95 border-2 border-sky-300 text-sky-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
+                        <span>⛶</span><span>ぜんがめん</span>
+                    </button>
+                    <button onclick="toggleSoundMute()" class="sound-toggle-btn px-3 py-1.5 rounded-2xl bg-amber-900/90 border-2 border-yellow-400 text-yellow-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
+                        <span>🔊</span><span>おと オン</span>
+                    </button>
+                </div>
             </div>
 
             <div class="flex flex-col items-center text-center">
@@ -193,8 +198,9 @@
     <header class="relative z-20 h-[12dvh] min-h-[66px] max-h-[92px] bg-gradient-to-r from-slate-950 via-indigo-950/85 to-slate-950 border-b-2 border-yellow-400 px-2 py-1 flex items-center gap-2 shrink-0">
         <div class="flex flex-col gap-1 shrink-0">
             <div class="flex items-center gap-1">
-                <a href="../index.html" class="w-8 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 border border-yellow-400/70 flex items-center justify-center text-sm active:scale-95" title="いちらんへ">🏠</a>
-                <button onclick="toggleSoundMute()" class="sound-toggle-btn w-8 h-7 rounded-lg bg-amber-900/90 border border-yellow-400 flex items-center justify-center text-sm active:scale-95" title="おと">🔊</button>
+                <a href="../index.html" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 border border-yellow-400/70 flex items-center justify-center text-xs active:scale-95" title="いちらんへ">🏠</a>
+                <button onclick="toggleSoundMute()" class="sound-toggle-btn w-7 h-7 rounded-lg bg-amber-900/90 border border-yellow-400 flex items-center justify-center text-xs active:scale-95" title="おと">🔊</button>
+                <button onclick="toggleGameFullscreen()" data-fs-mode="icon" class="fs-toggle-btn w-7 h-7 rounded-lg bg-sky-900 hover:bg-sky-800 border border-sky-300 flex items-center justify-center text-xs font-black active:scale-95" title="ぜんがめん">⛶</button>
             </div>
             <button onclick="confirmRestartToSetup()" class="px-1.5 h-6 rounded-lg bg-red-950 hover:bg-red-900 border border-red-400 text-[10px] font-black text-red-200 active:scale-95">
                 🔄 さいしょ
@@ -295,6 +301,7 @@
         </div>
     </div>
 
+    <script src="../assets/js/fullscreen.js"></script>
     <script>
         /* ==========================================================
            1. 選べる12ひきの 人気ポケモン定義（完全かんじゼロ！）

@@ -102,9 +102,14 @@
             <div class="inline-flex items-center gap-2 bg-gradient-to-r from-lime-300 via-emerald-400 to-teal-400 text-black font-black text-xs sm:text-sm px-4 py-1 rounded-full border-2 border-white shadow">
                 <span>🔍 ウォーリーをさがせ！ふう ポケモンたんけん</span>
             </div>
-            <button onclick="toggleMute()" class="mute-btn px-3 py-1.5 rounded-2xl bg-emerald-900/90 border-2 border-emerald-400 text-emerald-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
-                <span>🔊</span><span>おと オン</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleGameFullscreen()" data-fs-mode="kana" class="fs-toggle-btn px-3 py-1.5 rounded-2xl bg-sky-900/95 border-2 border-sky-300 text-sky-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
+                    <span>⛶</span><span>ぜんがめん</span>
+                </button>
+                <button onclick="toggleMute()" class="mute-btn px-3 py-1.5 rounded-2xl bg-emerald-900/90 border-2 border-emerald-400 text-emerald-100 font-black text-xs sm:text-sm flex items-center gap-1.5 active:scale-95">
+                    <span>🔊</span><span>おと オン</span>
+                </button>
+            </div>
         </div>
 
         <div class="relative z-10 w-full max-w-6xl mx-auto text-center my-1">
@@ -171,6 +176,7 @@
                 <span>💡</span><span>ヒント</span>
             </button>
             <button onclick="toggleMute()" class="mute-btn px-2 py-1.5 rounded-xl bg-emerald-900 border border-emerald-400 text-xs sm:text-sm font-black active:scale-95">🔊</button>
+            <button onclick="toggleGameFullscreen()" data-fs-mode="icon" class="fs-toggle-btn px-2.5 py-1.5 rounded-xl bg-sky-900 hover:bg-sky-800 border border-sky-300 text-sky-100 text-xs sm:text-sm font-black active:scale-95" title="ぜんがめん">⛶</button>
         </div>
     </header>
 
@@ -249,6 +255,7 @@
         </div>
     </div>
 
+    <script src="../assets/js/fullscreen.js"></script>
     <script src="../assets/data/pokemon_db.js"></script>
     <script>
         /* ==========================================================

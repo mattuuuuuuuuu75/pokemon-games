@@ -61,9 +61,12 @@
         <p class="mt-1.5 text-xs sm:text-base font-extrabold text-sky-200">
             あそびたい ゲームを タッチして ぼうけんに しゅっぱつだ！ ポケモン ゲットだぜ！！
         </p>
-        <div class="mt-2.5 flex items-center justify-center gap-2 flex-wrap">
+        <div class="mt-2.5 flex items-center justify-center gap-2.5 flex-wrap">
             <button onclick="playGreeting()" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-yellow-300 to-amber-400 hover:brightness-110 border-2 border-white text-black text-xs sm:text-sm font-black shadow-lg active:scale-95 transition">
                 <span>🔊</span><span>ピカチュウ＆サトシ風の かけごえをきく！</span>
+            </button>
+            <button onclick="toggleGameFullscreen()" data-fs-mode="portal" class="fs-toggle-btn inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-cyan-300 to-sky-400 hover:brightness-110 border-2 border-white text-black text-xs sm:text-sm font-black shadow-lg active:scale-95 transition">
+                <span>⛶</span><span>ぜんがめん（フルスクリーン）で おおきく あそぶ！</span>
             </button>
         </div>
     </header>
@@ -193,6 +196,7 @@
         💡 タブレットやスマホの「ホーム画面に追加」をしておくと、いつでもフル画面アプリとしてすぐ遊べます！
     </footer>
 
+    <script src="./assets/js/fullscreen.js"></script>
     <script>
         function playGreeting() {
             const hub = document.getElementById('hubAudio');
